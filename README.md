@@ -1,7 +1,3 @@
-# WXT + Vue 3
+# Extensão de controle de conteúdo
 
-This template should help get you started developing with Vue 3 in WXT.
-
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar).
+Uma extensão para auxiliar a controlar o acesso a conteúdo digital.
