@@ -1,13 +1,17 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
+import { BlockList } from '@/interfaces/BlockList';
 
+const selectBlockList = ref<BlockList | null> (null);
+const blockLists = ref<BlockList[]>([]);
 
 const curDomain = ref("");
-const treco = ref("");
+const listResults = ref("");
 
 onMounted(async () => {
-  const result = await browser.storage.local.get(["defaultBlockList"]);
-  treco.value = result.defaultBlockList;
+  const result = await browser.storage.local.get(["blockLists"]);
+  blockLists.value = result.blockLists;
+  selectBlockList.value = blockLists.value[0] || null;
   await handleBlockColor();
 });
 
@@ -69,19 +73,32 @@ async function handleBlockColor(){
     }
   }
 }
-
-
-
 </script>
 
 <template>
   <div class="card">
 
     <button id="blocking-button" type="button" @click="toggleBlock">BLOCK</button>
-    
+
+    <div class="list-box">
+    <label for="block-list-select">Lista de Bloqueio Atual</label>
+    <select v-model="selectBlockList" id="block-list-select">
+      <option v-for="(blockList, index) in blockLists" :key="index" :value="blockList">
+        {{ blockList.name }}
+      </option>
+    </select>
     <div>
       <p>Sites Bloqueados:</p>
-      <p>{{ treco }}</p>
+      <div id="blocked-sites-box">
+        <code v-for="(site, index) in selectBlockList?.blockedSites || []" :key="index">
+          {{ site }}
+        </code>
+    </div>
+    </div>
+  </div>
+    
+    <div>
+      <p>{{ listResults }}</p>
     </div>
     
 
@@ -93,6 +110,11 @@ async function handleBlockColor(){
 </template>
 
 <style scoped>
+.list-box{
+  display: flex;
+  flex-direction: column;
+}
+
 .domain-box{
   display: flex;
   flex-direction: column;
@@ -115,5 +137,12 @@ async function handleBlockColor(){
   height: 2rem;
   font-size: 1rem;
   margin-top: auto;
+}
+
+#blocked-sites-box{
+  display: flex;
+  flex-direction: column;
+  background-color: lightgrey;
+  border-radius: 0.4rem;
 }
 </style>

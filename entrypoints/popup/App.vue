@@ -1,5 +1,7 @@
 <script lang="ts" setup>
+import { ref, onMounted } from 'vue';
 import PopupMenu from '@/components/PopupMenu.vue';
+
 </script>
 
 <template>
@@ -7,6 +9,7 @@ import PopupMenu from '@/components/PopupMenu.vue';
 </template>
 
 <style scoped>
+
 .logo {
   height: 6em;
   padding: 1.5em;

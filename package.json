@@ -15,8 +15,7 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "vue": "^3.5.12",
-    "vuetify": "^3.7.6"
+    "vue": "^3.5.12"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.280",
