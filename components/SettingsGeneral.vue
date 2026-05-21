@@ -1,0 +1,97 @@
+<script lang="ts" setup>
+import { ref } from 'vue';
+
+//const checked = true
+const isExtensionEnabled = ref(true)
+const isBlockingEnabled = ref(true)
+const isRegisteringEnabled = ref(true)
+const isCosmeticFilteringEnabled = ref(true)
+const isDoomScrollingProtectionEnabled = ref(true)
+const isOverrideEnabled = ref(true)
+
+/*if (isExtensionEnabled){
+allcool
+else{
+return all false
+}*/
+
+</script>
+
+<template>
+    <div class="settings-content">
+        <p>Configurações Gerais</p>
+        <div class="settings-item">
+            <p> Funcionalidades Básicas</p>
+            <div>
+                <!--Conferir se 'hitbox' do check funciona corretamente-->
+                <input type="checkbox" id="extension-enabled" v-model="isExtensionEnabled"/>
+                <label for="extension-enabled"> Habilitar funcionamento da extensão? ({{ isExtensionEnabled }})</label>
+            </div>
+            <div>
+                <div>
+                    <input type="checkbox" id="blocking-enabled" :disabled="!isExtensionEnabled" v-model="isBlockingEnabled"/>
+                    <label for="blocking-enabled"> Habilitar bloqueio de acesso a sites/domínios registrados? ({{ isBlockingEnabled }})</label>
+                </div>
+
+                <div>
+                    <input type="checkbox" id="stats-enabled" :disabled="!isExtensionEnabled" v-model="isRegisteringEnabled"/>
+                    <label for="stats-enabled"> Habilitar registro do tempo de uso de sites/domínios registrados? ({{ isRegisteringEnabled }})</label>
+                </div>
+
+                <div>
+                    <input type="checkbox" id="comestic-filtering-enabled" :disabled="!isExtensionEnabled" v-model="isCosmeticFilteringEnabled"/>
+                    <label for="comestic-filtering-enabled"> Habilitar filtragem cosmética? ({{ isCosmeticFilteringEnabled }})</label>
+                </div>
+
+                <div>
+                    <input type="checkbox" id="doomscrolling-protection-enabled" :disabled="!isExtensionEnabled" v-model="isDoomScrollingProtectionEnabled"/>
+                    <label for="doomscrolling-protection-enabled"> Habilitar proteção contra práticas de incentivo a consumo abusivo (Doomscrolling, Auto-play)? ({{ isDoomScrollingProtectionEnabled }})</label>
+                </div>
+
+                <!--Desabilitar caso esteja bloqueando-->
+                <div>
+                    <input type="checkbox" id="override-enabled" :disabled="!isExtensionEnabled" v-model="isOverrideEnabled"/>
+                    <label for="override-enabled"> Habilitar a sobreposição de bloqueio? ({{ isOverrideEnabled }})</label>
+                </div>
+
+            </div>
+        </div>
+        
+        <div class="settings-item">
+            <p> Guia de Uso</p>
+            <p>Em caso de dúvidas, acesse o guia da extensão</p>
+            <code>extensão.guia</code>
+        </div>
+        <!--Formulário aqui-->
+        <div class="settings-item">
+            <p> Feedback</p>
+            <p>Se possível, responda um rápido formulário sobre sua experiência com a extensão</p>
+            <code>formulario.aqui/feedback</code>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+
+    .settings-content{
+        width: 100%;
+        padding: 1.2em;
+        border: 3px solid;
+        border-radius: 0.2em;
+        border-color: rgba(245, 245, 245, 0.6);
+    }
+
+    .settings-item{
+        display:flex;
+        flex-direction: column;
+        width:60%;
+        padding: 0.8em;
+        margin-top: 0.8em;
+        margin-bottom: 0.8em;
+        border: 2px solid;
+        border-radius: 0.2em;
+        border-color: rgba(245, 245, 245, 0.6);
+        
+    }
+
+</style>

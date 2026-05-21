@@ -2,87 +2,19 @@ import { BlockList } from "@/interfaces/BlockList";
 
 export default defineBackground(() => {
 
-function createBlockList(name: string, blockedSites: Array<string>): BlockList{
-  return{
-    name,
-    blockedSites,
-    isActive: true,
-    blockedUntil: new Date(0),
-    blockIntervals: [],
-    accessDay: new Date(),
-    accessTime: 0,
-  }
-}
-
-  /*class BlockList {
-    name: string;
-    blockedSites: Array<string>;
-    isActive: boolean = true;
-    blockedUntil: Date = new Date(0);
-    blockIntervals: Array<[string, string]> = []; 
-
-    constructor(name:string, blockedSites: Array<string>){
-      this.name = name;
-      this.blockedSites = blockedSites;
-    }
-
-    getName(){
-      return this.name;
-    }
-
-    getBlockedSites(){
-      return this.blockedSites;
-    }
-
-    addBlockedSite(site:string){
-      if(!this.blockedSites.includes(site)){
-        this.blockedSites.push(site);
-      }
-    }
-    removeBlockedSite(site:string){
-      if(this.blockedSites.includes(site)){
-        const removeIndex = this.blockedSites.indexOf(site);
-        this.blockedSites.splice(removeIndex, 1);
-      }
-    }
-
-    getIsActive(){
-      return this.isActive;
-    }
-    setIsActive(isActive: boolean){
-      this.isActive = isActive;
-    }
-
-    getBlockedUntil(){
-      return this.blockedUntil;
-    }
-
-    updateBlockedUntil(hours:number, minutes:number){
-      const curDate = new Date();
-      if (curDate > this.blockedUntil){
-        curDate.setHours(curDate.getHours() + hours);
-        curDate.setMinutes(curDate.getMinutes() + minutes);
-
-        this.blockedUntil = curDate;
-      } else {
-        this.blockedUntil.setHours(curDate.getHours() + hours);
-        this.blockedUntil.setMinutes(curDate.getMinutes() + minutes);
-      }
-    }
-
-    addBlockInterval(intervalStart:string, intervalEnd:string){
-      const hourMinReg = /^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/;
-      if(hourMinReg.test(intervalStart) && hourMinReg.test(intervalEnd)){
-        this.blockIntervals.push([intervalStart, intervalEnd]);
-      }
-    }
-
-    removeBlockInterval(removeIndex:number){
-      this.blockIntervals.splice(removeIndex, 1)
+  function createBlockList(name: string, blockedSites: Array<string>): BlockList{
+    return {
+      name,
+      blockedSites,
+      isActive: true,
+      blockedUntil: new Date(0),
+      blockIntervals: [],
+      accessDay: new Date(),
+      accessTime: 0,
     }
   }
-  */
 
+  //Garantir q a lista não seja substituida ao atualizar a extensão ou o navegador.
   let currentlyBlocking = true;
   let blockLists = [createBlockList("Lista Padrao", ["youtube.com", "x.com", "tiktok.com"])];
 
@@ -91,6 +23,7 @@ function createBlockList(name: string, blockedSites: Array<string>): BlockList{
       currentlyBlocking: currentlyBlocking,
       blockLists: blockLists
     }, () => {});
+    console.log('On Install: OK')
   })
 
   browser.storage.local.get([
@@ -100,7 +33,9 @@ function createBlockList(name: string, blockedSites: Array<string>): BlockList{
     currentlyBlocking = result.currentlyBlocking;
     blockLists = result.blockLists;
   });
+  console.log('Get #1: OK')
 
+  //Block logic
   browser.webRequest.onBeforeRequest.addListener(
     (details)=> {
       if(!currentlyBlocking){
@@ -127,6 +62,7 @@ function createBlockList(name: string, blockedSites: Array<string>): BlockList{
     ]
   );
 
+  //Mudar para storage.local
   browser.storage.onChanged.addListener((changes, namespace) =>{
     if (namespace == 'local'){
       if(changes.currentlyBlocking) {
@@ -135,6 +71,13 @@ function createBlockList(name: string, blockedSites: Array<string>): BlockList{
       if(changes.blockLists){
         blockLists = changes.blockLists.newValue;
       }
+
+      browser.storage.local.getBytesInUse(['currentlyBlocking', 'blockLists'], (result) => {
+        console.log(`Cur Storage Use: ${result} bytes`)
+      })
+      browser.storage.local.get(null).then((result: object) =>{
+        console.log(`Cur Keys: ${Object.keys(result)};`)
+      }).catch((err: string) => console.error(`Error: ${err}`));
     }
   })
 

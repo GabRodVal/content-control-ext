@@ -15,6 +15,10 @@ onMounted(async () => {
   await handleBlockColor();
 });
 
+async function redirectSettings() {
+  const url = browser.runtime.getURL('/settings.html');
+  await browser.tabs.create({ url });
+}
 
 async function getCurrentDomain(): Promise<string> {
   try {
@@ -50,6 +54,7 @@ async function toggleBlock(){
   const block = await browser.storage.local.get(["currentlyBlocking"]);
 
   const blockButton = document.getElementById("blocking-button");
+  //Aplicar classes no style.css | Adicionar Style.css padrão em 'content.ts' | aplicar
   if (blockButton != null){
     if (block.currentlyBlocking){
       blockButton.style.backgroundColor = "#cf0000";
@@ -106,8 +111,12 @@ async function handleBlockColor(){
       <button class="menu-button" type="button" @click="logDomain"> Mostrar domínio atual</button>
       <code id="domain-code" v-if="curDomain !== ''">{{curDomain}}</code>
     </div>
+
+    <button id="config-button" type="button" @click="redirectSettings()"> Config</button>
   </div>
 </template>
+
+<!-- Passar para dentro do style.css-->
 
 <style scoped>
 .list-box{
@@ -126,6 +135,12 @@ async function handleBlockColor(){
   color:whitesmoke;
   background-color: limegreen;
 
+}
+
+#config-button{
+  color: whitesmoke;
+  background-color: teal;
+  margin: 0.2em
 }
 
 #blocking-button{

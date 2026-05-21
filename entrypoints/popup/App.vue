@@ -8,6 +8,8 @@ import PopupMenu from '@/components/PopupMenu.vue';
   <PopupMenu/>
 </template>
 
+
+<!-- Passar pra style.css-->
 <style scoped>
 
 .logo {
