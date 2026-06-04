@@ -2,6 +2,32 @@
 import { ref, onMounted } from 'vue';
 import PopupMenu from '@/components/PopupMenu.vue';
 
+/*const isPopAppMounted = ref(false)
+
+onMounted(async () => {
+
+  isPopAppMounted.value = await getIsInitDone()
+
+  do {
+    isPopAppMounted.value = await getIsInitDone()
+
+    if(!isPopAppMounted){
+      setTimeout(async () => {},1000)
+    }
+  } while (!isPopAppMounted)
+
+})*/
+
+
+async function getIsInitDone() : Promise<boolean>{
+  let storageInitiated =  false
+  browser.storage.local.get(null).then((result: object) =>{
+    storageInitiated = (Object.keys(result).length > 0)
+  }).catch((err: string) => console.error(`Error: ${err}`));
+
+  return storageInitiated
+}
+
 </script>
 
 <template>

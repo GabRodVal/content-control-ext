@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { nextTick, ref, onBeforeMount, h } from 'vue';
-import { BlockList } from '@/interfaces/BlockList';
+import { BlockEntry } from '@/classes/BlockEntry';
+import { parseResultsBlockEntry } from '@/utils';
 
 //const checked = true
 //const isExtensionEnabled = ref(true)
@@ -10,14 +11,14 @@ import { BlockList } from '@/interfaces/BlockList';
 //const isDoomScrollingProtectionEnabled = ref(true)
 
 //const blockLists = ref<BlockList[]>([]);
-const blockLists = ref<BlockList[]>([]);
+const blockList = ref<BlockEntry[]>([]);
 
 const mounted = ref<boolean>(false)
 
 onBeforeMount(async () => {
     console.log('1')
-  await browser.storage.local.get(["blockLists"]).then((result)=>{
-    blockLists.value = result.blockLists;
+  await browser.storage.local.get(["blockList"]).then((result)=>{
+    blockList.value = parseResultsBlockEntry(result.blockList);
   }).catch((err) => {
     console.error(err)
   }).finally(() =>{
@@ -29,19 +30,6 @@ onBeforeMount(async () => {
     mounted.value = true
     console.log(mounted.value)
 });
-
-function renderBlockList(bl: BlockList) {
-    console.log(bl)
-    bl.blockedSites.map((siteUrl) => {
-        return h('tr', [
-            h('td', siteUrl),
-            h('td', 'N/A'),
-            h('td', true),
-            h('td', 255)
-        ]
-        )
-    })
-}
 
 </script>
 
@@ -56,15 +44,15 @@ function renderBlockList(bl: BlockList) {
                             <th>Domínio</th>
                             <th>Adicionado Em</th>
                             <th>Disponível</th>
-                            <th>Acessos</th>
+                            <th>T. Acesso</th>
                         </tr>
                     </thead>
                     <tbody v-if="mounted" class="domain-table-body">
-                        <tr v-for="domain in blockLists[0].blockedSites" :key="domain" class="domain-table-row"> 
-                            <td class="domain-table-cell"> {{ domain }} </td>
-                            <td class="domain-table-cell"> N/A </td>
-                            <td class="domain-table-cell"> {{ true }}</td>
-                            <td class="domain-table-cell"> 255 </td>
+                        <tr v-for="domain in blockList" class="domain-table-row"> 
+                            <td class="domain-table-cell"> {{ domain.getDomainName() }} </td>
+                            <td class="domain-table-cell"> {{ domain.getLastAccess() }} </td>
+                            <td class="domain-table-cell"> {{ !domain.isBlocked() }}</td>
+                            <td class="domain-table-cell"> {{`${(domain.getAccessTime().total)/1000}s`}} </td>
                         </tr>
                         <!--{{/renderBlockList(blockLists[0])}}-->
                     </tbody>
@@ -92,71 +80,3 @@ function renderBlockList(bl: BlockList) {
         </div>
     </div>
 </template>
-
-<style scoped>
-
-    .domain-table-container{
-        min-height: 55vh;
-        overflow-y: auto;
-        padding: 0;
-        background-color:oklch(27.9% 0.041 260.031);
-        border: 1px solid;
-        border-radius: 0.4em;
-        box-shadow: 0 0.12em 0.2em 0.12em rgba(0, 0, 0, 0.37);
-    }
-
-    .domain-table{
-        width: 100%;
-        border-collapse: collapse;
-        background-color:oklch(20.8% 0.042 265.755) ;
-    }
-
-    .domain-table-row{
-        position: relative;
-        text-align: center;
-        background-color: oklch(44.6% 0.043 257.281);
-        margin: 0;
-        border-radius: 0.12em;
-        border-collapse: collapse;
-        transition: 120ms;
-    }
-
-    .domain-table-row:hover{
-        background-color: oklch(55.4% 0.046 257.417);
-    }
-
-    .domain-table-cell{
-        padding-top: 0.4em;
-        padding-bottom: 0.4em;
-    }
-
-    .domain-table-operators{
-        position: relative;
-        display: flex;
-        margin: auto;
-        padding: 0.8;
-    }
-
-    .settings-content{
-        width: 100%;
-        padding: 1.2em;
-        border: 3px solid;
-        border-radius: 0.2em;
-        border-color: rgba(245, 245, 245, 0.6);
-    }
-
-    .settings-item{
-        display:flex;
-        flex-direction: column;
-        min-width:60%;
-        max-width: 75vw;
-        padding: 0.8em;
-        margin-top: 0.8em;
-        margin-bottom: 0.8em;
-        border: 2px solid;
-        border-radius: 0.2em;
-        border-color: rgba(245, 245, 245, 0.6);
-        
-    }
-
-</style>

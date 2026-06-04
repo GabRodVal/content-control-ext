@@ -1,18 +1,52 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { BlockList } from '@/interfaces/BlockList';
+import { ref,onBeforeMount } from 'vue';
+//import { BlockList } from '@/classes/BlockList';
+import { cleanDomainName, parseResultsBlockEntry } from '@/utils';
+import { BlockEntry } from '@/classes/BlockEntry';
 
-const selectBlockList = ref<BlockList | null> (null);
-const blockLists = ref<BlockList[]>([]);
+const isPopAppMounted = ref(false)
+
+//const selectBlockList = ref<BlockList | null> (null);
+//const blockLists = ref<BlockList[]>([]);
+
+const blockEntryList = ref<BlockEntry[]>([])
 
 const curDomain = ref("");
-const listResults = ref("");
+//const listResults = ref("");
 
-onMounted(async () => {
-  const result = await browser.storage.local.get(["blockLists"]);
-  blockLists.value = result.blockLists;
-  selectBlockList.value = blockLists.value[0] || null;
-  await handleBlockColor();
+
+onBeforeMount(async () => {
+  let blockEntries = await browser.storage.local.get(["blockList"])
+  .then((results) => {
+    console.log('[]?',results)
+      return parseResultsBlockEntry(results.blockList);
+  }).catch((err) =>{
+    console.error('ERROR - PopupMenu.vue:',err)
+    return []
+  })
+
+  blockEntries.map((blEntry) =>{
+    console.log('blEntry:',blEntry)
+    blockEntryList.value.push(blEntry);
+  })
+  
+  
+  browser.storage.local.onChanged.addListener(handleBlockColor)
+
+  //await handleBlockColor();
+
+  //confuso, remontar
+  do {
+
+      isPopAppMounted.value = (blockEntryList.value !== null)
+
+    if(!isPopAppMounted.value){
+      setTimeout(() => {}, 2000)
+      console.log('block', blockEntryList)
+    }
+  } while (!isPopAppMounted.value)
+
+  handleBlockColor();
 });
 
 async function redirectSettings() {
@@ -26,12 +60,7 @@ async function getCurrentDomain(): Promise<string> {
     if (tabs.length > 0) {
       const tabUrl: string | undefined = tabs[0]?.url;
       if (tabUrl) {
-        const url = new URL(tabUrl);
-        const domain = url.hostname;
-        const domainParts = domain.split(".").reverse();
-        if (domainParts.length > 1) {
-          return `${domainParts[1]}.${domainParts[0]}`;
-        }
+        return cleanDomainName(tabUrl);
       } else {
         console.error("URL indefinida");
         return "N/A";
@@ -51,9 +80,9 @@ async function logDomain(){
 
 async function toggleBlock(){
 
-  const block = await browser.storage.local.get(["currentlyBlocking"]);
+  let block = await browser.storage.local.get(["currentlyBlocking"]);
 
-  const blockButton = document.getElementById("blocking-button");
+  /*const blockButton = document.getElementById("blocking-button");
   //Aplicar classes no style.css | Adicionar Style.css padrão em 'content.ts' | aplicar
   if (blockButton != null){
     if (block.currentlyBlocking){
@@ -61,7 +90,7 @@ async function toggleBlock(){
     } else {
       blockButton.style.backgroundColor = "limegreen";
     }
-  }
+  }*/
 
   browser.storage.local.set({currentlyBlocking: !block.currentlyBlocking}, () => {});
 }
@@ -81,30 +110,22 @@ async function handleBlockColor(){
 </script>
 
 <template>
-  <div class="card">
+  <div class="card" v-if="isPopAppMounted">
 
     <button id="blocking-button" type="button" @click="toggleBlock">BLOCK</button>
 
     <div class="list-box">
-    <label for="block-list-select">Lista de Bloqueio Atual</label>
-    <select v-model="selectBlockList" id="block-list-select">
-      <option v-for="(blockList, index) in blockLists" :key="index" :value="blockList">
-        {{ blockList.name }}
-      </option>
-    </select>
-    <div>
-      <p>Sites Bloqueados:</p>
-      <div id="blocked-sites-box">
-        <code v-for="(site, index) in selectBlockList?.blockedSites || []" :key="index">
-          {{ site }}
-        </code>
-    </div>
-    </div>
+        <p>Sites Bloqueados:</p>
+        <div id="blocked-sites-box">
+          <code v-for="(site, index) in blockEntryList" :key="index" :value="site">
+            {{ site.getDomainName() }}
+          </code>
+      </div>
   </div>
     
-    <div>
+    <!--<div>
       <p>{{ listResults }}</p>
-    </div>
+    </div>-->
     
 
     <div class="domain-box">

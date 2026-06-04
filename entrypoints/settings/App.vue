@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import SettingsGeneral from '@/components/SettingsGeneral.vue';
 import SettingsBlockList from '@/components/SettingsBlockList.vue';
+import SettingsBlockOptions from '@/components/SettingsBlockOptions.vue';
 
 /*const settings = ref({ option1: false });
 
@@ -56,6 +57,7 @@ function setSettingsState(st: settingsSections){
 
       <SettingsGeneral v-if="settingsState[0]"/>
       <SettingsBlockList v-if="settingsState[1]"/>
+      <SettingsBlockOptions v-if="settingsState[2]"/>
     </div>
 
   </div>
