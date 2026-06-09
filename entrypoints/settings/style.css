@@ -1,7 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: 'Courier Prime','Courier New', Courier, monospace/*, system-ui, Avenir, Helvetica, Arial, sans-serif*/;
   font-weight: 400;
+  line-height: 1.5;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
@@ -80,5 +82,236 @@ button:disabled{
 .card {
   padding: 2em;
 }
+/*SettingsBlockList.vue*/
+.domain-table-container {
+  min-height: 55vh;
+  overflow-y: auto;
+  padding: 0;
+  background-color: oklch(27.9% 0.041 260.031);
+  border: 1px solid;
+  border-radius: 0.4em;
+  box-shadow: 0 0.12em 0.2em 0.12em rgba(0, 0, 0, 0.37);
+}
 
+.domain-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: oklch(20.8% 0.042 265.755);
+}
 
+.domain-table-row {
+  position: relative;
+  text-align: center;
+  background-color: oklch(44.6% 0.043 257.281);
+  margin: 0;
+  border-radius: 0.12em;
+  border-collapse: collapse;
+  transition: 120ms;
+}
+
+.domain-table-row:hover {
+  background-color: oklch(55.4% 0.046 257.417);
+}
+
+.domain-table-cell {
+  padding-top: 0.4em;
+  padding-bottom: 0.4em;
+}
+
+.domain-table-operators {
+  position: relative;
+  display: flex;
+  margin: auto;
+  padding: 0.8;
+}
+
+.settings-content {
+  width: 100%;
+  padding: 1.2em;
+  border: 3px solid;
+  border-radius: 0.2em;
+  border-color: rgba(245, 245, 245, 0.6);
+}
+
+.settings-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 60%;
+  max-width: 75vw;
+  padding: 0.8em;
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+  border: 2px solid;
+  border-radius: 0.2em;
+  border-color: rgba(245, 245, 245, 0.6);
+
+}
+
+/*SettingsStatView*/
+
+.stats-board {
+  position: relative;
+  display: flex;
+  background-color: whitesmoke;
+  height: 720px;
+  width: 1280px;
+}
+
+.stats-board-section{
+  width: 16%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0.2em;
+  color: oklch(70.5% 0.015 286.067);
+  font-size: 1.6em;
+  font-weight: 700;
+  border: solid rgba(0, 0, 0, 0.397) 0.24em;
+  padding-top: auto;
+  text-align: center;
+}
+
+.stats-board-day{
+  position: absolute;
+  height: 96%;
+  top: 2rem;
+  text-align: center;
+  align-content: end;
+  margin-left: 0.16em;
+  width: 100%;
+}
+
+.stats-board-domains{
+  position: relative;
+  overflow: hidden;
+  width: 88%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: default;
+  user-select: none;
+  align-content: center;
+}
+
+.stats-board-tooltip{
+  position: fixed;
+  width: 16em;
+  height: 2.4em;
+  line-height: 2.4em;
+  padding: auto;
+  display: none;
+  z-index: 999;
+  pointer-events: none;
+}
+
+.stats-board-domains:hover .stats-board-tooltip{
+  display: block;
+}
+
+.stats-board-day-title{
+  position: relative;
+  width: 92%;
+  height: 2rem;
+  color: #1a1a1a;
+  font-size: 1.6rem;
+  line-height: 1rem;
+  padding: 0;
+  padding-top: 0.24em;
+  margin-top: 0.24em;
+  border-top: solid 0.12em #1a1a1a;
+}
+
+.b-red {
+  background-color: oklch(58.6% 0.253 17.585);
+  border-left: 0.24em solid;
+  border-right: 0.24em solid;
+  border-top: 0.08em solid;
+  border-bottom: 0.08em solid;
+  border-color: oklch(41% 0.159 10.272);
+  color: oklch(27.1% 0.105 12.094);
+}
+
+.b-red:hover{
+  background-color: oklch(41% 0.159 10.272);
+  border-color: oklch(58.6% 0.253 17.585);
+  color: oklch(58.6% 0.253 17.585);
+}
+
+.b-blue {
+  background-color: oklch(51.1% 0.262 276.966);
+  border-left: 0.24em solid;
+  border-right: 0.24em solid;
+  border-top: 0.08em solid;
+  border-bottom: 0.08em solid;
+  border-color: oklch(35.9% 0.144 278.697);
+  color: oklch(25.7% 0.09 281.288);
+}
+
+.b-blue:hover {
+  background-color: oklch(35.9% 0.144 278.697);
+  border-color: oklch(51.1% 0.262 276.966);
+  color: oklch(51.1% 0.262 276.966);
+}
+
+.b-green {
+  background-color: oklch(59.6% 0.145 163.225);
+  border-left: 0.24em solid;
+  border-right: 0.24em solid;
+  border-top: 0.08em solid;
+  border-bottom: 0.08em solid;
+  border-color: oklch(37.8% 0.077 168.94);
+  color: oklch(26.2% 0.051 172.552);
+}
+
+.b-green:hover {
+  background-color: oklch(37.8% 0.077 168.94);
+  border-color: oklch(59.6% 0.145 163.225);
+  color: oklch(59.6% 0.145 163.225);
+}
+
+.b-yellow {
+  background-color: oklch(64.6% 0.222 41.116);
+  border-left: 0.24em solid;
+  border-right: 0.24em solid;
+  border-top: 0.08em solid;
+  border-bottom: 0.08em solid;
+  border-color: oklch(41.4% 0.112 45.904);
+  color: oklch(27.9% 0.077 45.635);
+}
+
+.b-yellow:hover {
+  background-color: oklch(41.4% 0.112 45.904);
+  border-color: oklch(64.6% 0.222 41.116);
+  color: oklch(64.6% 0.222 41.116);
+}
+
+.b-purple {
+  background-color: oklch(59.1% 0.293 322.896);
+  border-left: 0.24em solid;
+  border-right: 0.24em solid;
+  border-top: 0.08em solid;
+  border-bottom: 0.08em solid;
+  border-color: oklch(40.1% 0.17 325.612);
+  color: oklch(29.3% 0.136 325.661);
+}
+
+.b-purple:hover {
+  background-color: oklch(40.1% 0.17 325.612);
+  border-color: oklch(59.1% 0.293 322.896);
+  color: oklch(59.1% 0.293 322.896);
+}
+
+.b-gray {
+  background-color: oklch(43.5% 0.029 321.78);
+  border-left: 0.24em solid;
+  border-right: 0.24em solid;
+  border-top: 0.08em solid;
+  border-bottom: 0.08em solid;
+  border-color: oklch(21.2% 0.019 322.12);
+  color: oklch(14.5% 0.008 326);
+}
+
+.b-gray:hover {
+  background-color: oklch(21.2% 0.019 322.12);
+  border-color: oklch(43.5% 0.029 321.78);
+  color: oklch(43.5% 0.029 321.78);
+}

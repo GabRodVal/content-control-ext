@@ -1,37 +1,30 @@
 import { BlockList } from "@/classes/BlockList";
 import { BlockEntry } from "@/classes/BlockEntry";
-import { parseResultsBlockEntry } from "@/utils";
+import { clearAllIntervals, parseResultsBlockEntry } from "@/utils";
+import { setBlockEntryList } from "@/storage_utils";
 
 export default defineBackground(() => {
 
-  /*function createBlockList(name: string, blockedSites: Array<string>): BlockList{
-    return {
-      name,
-      blockedSites,
-      isActive: true,
-      blockedUntil: new Date(0),
-      blockIntervals: [],
-      accessDay: new Date(),
-      accessTime: 0,
-    }
-  }*/
-
   const initBlockEntries: Array<BlockEntry> = []
   var blockList: Array<BlockEntry> = []
-
+  const usageIntervals: Array<NodeJS.Timeout> = []
 
   initBlockEntries.push(new BlockEntry('youtube.com'))
   initBlockEntries.push(new BlockEntry('instagram.com'))
+  initBlockEntries[1].addAccessTime(1000 * 60 * 60 * 4)
   initBlockEntries.push(new BlockEntry('x.com'))
+  initBlockEntries[2].addAccessTime(1000 * 60 * 60 * 8)
   initBlockEntries.push(new BlockEntry('chat.openai.com'))
   initBlockEntries.push(new BlockEntry('tiktok.com'))
+  initBlockEntries[4].addAccessTime(1000 * 60 * 60 * 3)
+  initBlockEntries.push(new BlockEntry('reddit.com'))
 
 
   //Garantir q a lista não seja substituida ao atualizar a extensão ou o navegador.
   let currentlyBlocking = true;
   //let blockLists = [createBlockList("Lista Padrao", ["youtube.com", "x.com", "tiktok.com"])];
 
-  browser.runtime.onInstalled.addListener(() => {
+  browser.runtime.onInstalled.addListener(async () => {
     browser.storage.local.set({
       currentlyBlocking: currentlyBlocking,
       //blockLists: blockLists,
@@ -39,9 +32,8 @@ export default defineBackground(() => {
     }, () => {});
     console.log('On Install: OK')
 
-    setTimeout(() => {
-      console.log('Instalando...')
-    }, 1000)
+    await nextTick()
+    console.log('Instalando...')
 
     browser.storage.local.get([
       "currentlyBlocking",
@@ -56,17 +48,15 @@ export default defineBackground(() => {
     });
   })
 
-  setInterval(() => {
+  /*setInterval(() => {
     for (var f = 0; f < blockList.length; f++){
       blockList[f].updateAccessTime();
     }
-  },10 * 60 * 1000)
-
+  },20 * 60 * 1000)
+  */
 
   if (blockList.length < 1){
-    setTimeout(() => {
-      console.log('Iniciando...')
-    }, 5000)
+    console.log('Iniciando...')
 
     browser.storage.local.get(["blockList"],
       (result) => {
@@ -82,18 +72,6 @@ export default defineBackground(() => {
       if(!currentlyBlocking){
         return {cancel: false};
       }
-
-      /*let cancel = blockLists.some(blockList =>{
-        const siteList = blockList.blockedSites;
-
-        let cancel = siteList.some(site => {
-          let url = new URL(details.url);
-          return Boolean(url.hostname.indexOf(site) != -1);
-        });
-
-        return cancel;
-      })*/
-
 
       let cancel = blockList.some((blockedDomain:BlockEntry) => {
         let bDomainName = blockedDomain.getDomainName();
@@ -141,10 +119,69 @@ export default defineBackground(() => {
     }
   })
   
-  var usageBeholder:NodeJS.Timeout
+  var usageBeholders:NodeJS.Timeout[] = []
   var accumulatedTime: number = 0
+  var lastBlDomain = '';
+  const usageEvents = [
+    browser.windows.onFocusChanged,
+    browser.tabs.onUpdated,
+    browser.tabs.onActivated,
+  ]
 
-  browser.windows.onFocusChanged.addListener(async () => {
+  usageEvents.forEach(ev => {
+    ev.addListener(async () => {
+
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+
+    if (tabs.length > 0) {
+
+      const tabUrl: string | undefined = tabs[0]?.url;
+      if (tabUrl!== undefined) {
+
+        var curDomain = new URL(tabUrl).hostname;
+        if(curDomain !== lastBlDomain){
+          if (usageBeholders.length > 0) {
+            usageBeholders = clearAllIntervals(usageBeholders)
+          }
+
+          blockList.map((blockedDomain, index) => {
+            let bDomainName = blockedDomain.getDomainName();
+
+
+            let theOne = Boolean(curDomain.indexOf(bDomainName) != -1);
+            console.log('the one:', bDomainName, theOne)
+
+            if (theOne) {
+              usageBeholders = clearAllIntervals(usageBeholders)
+              var lastInterval = new Date();
+              usageBeholders.push(setInterval(() => {
+                var newInterval = new Date();
+                var timeAdded = newInterval.getTime() - lastInterval.getTime();
+                blockList[index].addAccessTime(timeAdded);
+                accumulatedTime += timeAdded;
+                console.log(`${bDomainName}: +2.5s! (${timeAdded})| ${blockList[index].getAccessTime().today}`)
+
+                if (accumulatedTime > 1000 * 60 * 1) {
+                  setBlockEntryList(blockList);
+                  console.log(blockList)
+
+                  accumulatedTime = 0;
+                  console.log('Time accumulated')
+                }
+                lastInterval = newInterval;
+              }, 2500)
+              );
+            }
+          })
+
+          lastBlDomain = curDomain;
+        }
+        
+      }
+    }
+  })})
+
+  /*browser.windows.onFocusChanged.addListener(async () => {
     if (usageBeholder !== null) {
       clearInterval(usageBeholder);
     }
@@ -164,9 +201,9 @@ export default defineBackground(() => {
               clearInterval(usageBeholder);
             }
             usageBeholder = setInterval(() => {
-              blockedDomain.addAccessTime(2500);
-              accumulatedTime += 2500;
-              console.log(`${bDomainName}: +2.5s!`)
+              blockedDomain.addAccessTime(1000);
+              accumulatedTime += 1000;
+              console.log(`${bDomainName}: +1s!`)
 
               if (accumulatedTime > 1000 * 60 * 2) {
                 browser.storage.local.set({
@@ -175,14 +212,14 @@ export default defineBackground(() => {
                 accumulatedTime = 0;
                 console.log('Time accumulated')
               }
-            }, 2500);
+            }, 1000);
           }
         })
       }
     }
-  })
+  })*/
 
-  browser.tabs.onUpdated.addListener(async () => {
+  /*browser.tabs.onUpdated.addListener(async () => {
     if (usageBeholder !== null) {
       clearInterval(usageBeholder);
     }
@@ -202,24 +239,25 @@ export default defineBackground(() => {
               clearInterval(usageBeholder);
             }
             usageBeholder = setInterval(() => {
-              blockedDomain.addAccessTime(2500);
-              accumulatedTime += 2500;
-              console.log(`${bDomainName}: +2.5s!`)
+              blockedDomain.addAccessTime(3000);
+              accumulatedTime += 3000;
+              console.log(`${bDomainName}: +3s!`)
 
-              if (accumulatedTime > 1000 * 60 * 2) {
+              if (accumulatedTime > 3000 * 60 * 3) {
                 browser.storage.local.set({
                   blockList: blockList,
                 }, () => { });
                 accumulatedTime = 0;
                 console.log('Time accumulated')
               }
-            }, 2500);
+            }, 3000);
           }
         })
       } 
     }
   })
-    //browser.windows.onFocusChanged.addListener((windowId) => {
+
+  //browser.windows.onFocusChanged.addListener((windowId) => {
   browser.tabs.onActivated.addListener(async (actInfo) => {
     console.log(`Aba N#${actInfo.tabId}: Em atividade`);
     console.log(`Janela N#${actInfo.windowId}: Em atividade`);
@@ -243,21 +281,20 @@ export default defineBackground(() => {
               clearInterval(usageBeholder);
             }
             usageBeholder = setInterval(() => {
-              blockedDomain.addAccessTime(2500);
-              accumulatedTime += 2500;
-              console.log(`${bDomainName}: +2.5s!`)
+              blockedDomain.addAccessTime(3000);
+              accumulatedTime += 3000;
+              console.log(`${bDomainName}: +3s!`)
 
 
-              if (accumulatedTime > 1000 * 60 * 2) {
+              if (accumulatedTime > 1000 * 60 * 3) {
                 browser.storage.local.set({
                   blockList: blockList,
                 }, () => { });
                 accumulatedTime = 0;
                 console.log('Time accumulated')
               }
-            }, 2500);
+            }, 3000);
           }
-
 
           return theOne;
 
@@ -266,5 +303,5 @@ export default defineBackground(() => {
     }
 
   })
-
+*/
 });

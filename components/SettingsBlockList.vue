@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { nextTick, ref, onBeforeMount, h } from 'vue';
 import { BlockEntry } from '@/classes/BlockEntry';
-import { parseResultsBlockEntry } from '@/utils';
+import { formatHoursMinutes, parseResultsBlockEntry } from '@/utils';
 
 //const checked = true
 //const isExtensionEnabled = ref(true)
@@ -52,7 +52,7 @@ onBeforeMount(async () => {
                             <td class="domain-table-cell"> {{ domain.getDomainName() }} </td>
                             <td class="domain-table-cell"> {{ domain.getLastAccess() }} </td>
                             <td class="domain-table-cell"> {{ !domain.isBlocked() }}</td>
-                            <td class="domain-table-cell"> {{`${(domain.getAccessTime().total)/1000}s`}} </td>
+                            <td class="domain-table-cell"> {{`${(domain.getAccessTime().total)}|${formatHoursMinutes(domain.getAccessTime().total)}`}} </td>
                         </tr>
                         <!--{{/renderBlockList(blockLists[0])}}-->
                     </tbody>

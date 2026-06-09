@@ -26,7 +26,6 @@ onBeforeMount(async () => {
   })
 
   blockEntries.map((blEntry) =>{
-    console.log('blEntry:',blEntry)
     blockEntryList.value.push(blEntry);
   })
   
@@ -37,13 +36,9 @@ onBeforeMount(async () => {
 
   //confuso, remontar
   do {
-
+      await nextTick()
       isPopAppMounted.value = (blockEntryList.value !== null)
 
-    if(!isPopAppMounted.value){
-      setTimeout(() => {}, 2000)
-      console.log('block', blockEntryList)
-    }
   } while (!isPopAppMounted.value)
 
   handleBlockColor();

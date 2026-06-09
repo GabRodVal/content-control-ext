@@ -1,5 +1,5 @@
-import { BlockEntry } from "./classes/BlockEntry";
-import { BlockEntryImp } from "./interfaces/BlockEntryImp";
+import { BlockEntry } from "@/classes/BlockEntry";
+import { BlockEntryImp } from "@/interfaces/BlockEntryImp";
 
 async function getCurrentDomain(): Promise<string> {
     try {
@@ -71,6 +71,36 @@ export function parseResultsBlockEntry(res:BlockEntryImp[]): Array<BlockEntry>{
 
     return blockEntryArray;
 }
+
+export function formatHoursMinutes(ms: number): string {
+    let hours = Math.floor(ms / (1000 * 60 * 60))
+    let minutes = Math.floor(ms / (1000 * 60)) - (Math.floor(ms / (1000 * 60 * 60))*60)
+
+    if(hours > 0){
+        if(minutes > 0){
+            return `${hours}h${minutes}m`
+        } else {
+            return `${hours}h`
+        }
+    } else {
+        return `${minutes}m`
+    }
+// {{`${Math.floor(blockEntryList[selectedBlockentry].getDailyLimitTime()/(1000 * 60 * 60))}h${Math.floor(blockEntryList[selectedBlockentry].getDailyLimitTime()/(1000 * 60)) - (Math.floor(blockEntryList[selectedBlockentry].getDailyLimitTime()/(1000 * 60 * 60)) * 60)}m`}}
+}
+
+export function clearAllIntervals(timOuts: Array<NodeJS.Timeout>): Array<NodeJS.Timeout> {
+    var tLen = timOuts.length
+    for (var f = 0; f<tLen; f++){
+        let oldEvent = timOuts.pop()
+        if (oldEvent !== undefined){
+            clearInterval(oldEvent);
+        }
+    }
+
+    return timOuts
+}
+
+
 /*
 {
   "domainName": "youtube.com",

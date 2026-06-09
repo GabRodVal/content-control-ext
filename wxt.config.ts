@@ -9,6 +9,7 @@ export default defineConfig({
     "permissions": [
       "storage",
       "tabs",
+      "windows",
       "webRequest",
       "webRequestBlocking",
       "<all_urls>",

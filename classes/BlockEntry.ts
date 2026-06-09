@@ -19,7 +19,7 @@ export class BlockEntry {
     public constructor(domainName: string,
         blockedUntil: Date = new Date(2000, 1, 1),
         blockHours: [string, string][] = [],
-        blockWeekdays: string[] = [],
+        blockWeekdays: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
         dailyLimit:Boolean = false,
         dailyLimitTime: number = 24 * 60 * 60 * 1000,
         lastAccess: Date = new Date(),
@@ -111,23 +111,23 @@ export class BlockEntry {
         this.blockHours = newBlockHours
     }
 
-    public isInBlockingInterval(curDate: Date): Boolean{
+    public isInBlockingInterval(): Boolean{
+        const curDate = new Date()
         let intervals = this.getBlockHours();
         let intA:string[], intB:string[], hourA:Date, hourB:Date
-        hourA = hourB = new Date(curDate.getFullYear(), curDate.getMonth(), curDate.getDate());
-
+        hourA = new Date();
+        hourB = new Date();
         for (let f = 0; f<intervals.length; f++){
-            intA = intervals[f][0].split(`\:`)
-            intB = intervals[f][1].split(`\:`)
+            intA = intervals[f][0].split(`:`)
+            intB = intervals[f][1].split(`:`)
 
-            hourA.setHours(parseInt(intA[0])); hourA.setMinutes(parseInt(intA[1]))
-            hourB.setHours(parseInt(intB[0])); hourB.setMinutes(parseInt(intB[1]))
+            hourA.setHours(parseInt(intA[0]), parseInt(intA[1])); 
+            hourB.setHours(parseInt(intB[0]), parseInt(intB[1])); 
 
             if (curDate > hourA && curDate < hourB){
                 return true;
             }
         }
-
 
         return false
     }
@@ -212,7 +212,7 @@ export class BlockEntry {
 
         let oldAccessTime = this.accessTime
         let currently = new Date();
-
+        /*
         let lastUpUTC = Date.UTC(oldAccessTime.lastUpdate.getFullYear(), oldAccessTime.lastUpdate.getMonth(), oldAccessTime.lastUpdate.getDate());
         let curUTC = Date.UTC(currently.getFullYear(), currently.getMonth(), currently.getDate());
 
@@ -230,6 +230,7 @@ export class BlockEntry {
             oldAccessTime.lastMonth = oldAccessTime.curMonth;
             oldAccessTime.curMonth = 0;
         }
+        */
 
         oldAccessTime.lastUpdate = currently;
 
@@ -255,20 +256,20 @@ export class BlockEntry {
             return true;
         }
 
-        if (this.getBlockWeekDays().findIndex((el, id) =>{
+
+        if (this.isInBlockingInterval()) {
             let weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            if (this.getBlockWeekDays().some((el) => {
+                if (weekdays[currently.getDay()].toLowerCase() === el.toLowerCase()) {
+                    return true;
+                }
+                return false
 
-            if (weekdays[currently.getDay()].toLowerCase() === el){
-                return true;
-            }
-
-            return false;
-        }) !== -1) {
-            if (this.isInBlockingInterval(currently)) {
+            })) {
                 return true;
             }
         }
-        
+
         if (curAccessTime.today >= this.getDailyLimitTime()){
             return true;
         }
