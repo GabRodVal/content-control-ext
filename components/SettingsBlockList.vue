@@ -52,7 +52,8 @@ onBeforeMount(async () => {
                             <td class="domain-table-cell"> {{ domain.getDomainName() }} </td>
                             <td class="domain-table-cell"> {{ domain.getLastAccess() }} </td>
                             <td class="domain-table-cell"> {{ !domain.isBlocked() }}</td>
-                            <td class="domain-table-cell"> {{`${(domain.getAccessTime().total)}|${formatHoursMinutes(domain.getAccessTime().total)}`}} </td>
+                            <!--<td class="domain-table-cell"> {{`${(domain.getAccessTime().total)}|${formatHoursMinutes(domain.getAccessTime().total)}`}} </td>-->
+                            <td class="domain-table-cell"> {{`${formatHoursMinutes(domain.getAccessTime().total)}`}} </td>
                         </tr>
                         <!--{{/renderBlockList(blockLists[0])}}-->
                     </tbody>

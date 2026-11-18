@@ -115,7 +115,7 @@ function removeBlockHoursInterval(blEntry: BlockEntry, intervalIndex: number){
     <div class="settings-content">
         <p>Opções de Bloqueio</p>
         <div class="settings-item" v-if="mounted">
-            <label for="block-list-select">Lista de Bloqueio Atual</label>
+            <label for="block-list-select">Bloqueio a Configurar:</label>
             <select v-model="selectedBlockentry" id="block-list-select">
             <option v-for="(blcEnt, index) in blockEntryList" :key="index" :value="index" v-on:change="()=>{selectedBlockentry = index}">
                 {{ `${blcEnt.getDomainName()}` }}
@@ -131,15 +131,15 @@ function removeBlockHoursInterval(blEntry: BlockEntry, intervalIndex: number){
                     <p>Bloqueio ativo até</p>
                     <code v-if="blockEntryList[selectedBlockentry].getBlockedUntil() < (new Date())"> --- </code>
                     <code v-else>{{ blockEntryList[selectedBlockentry].getBlockedUntil() }}</code>
-                    <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()">Bloquear</button>
+                    <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">Bloquear</button>
 
                     <input type="checkbox" v-model="openBlockUntil" name="bloqueio-ativo">
                         <label for="bloqueio-ativo">Realizar bloqueio</label>
                         <div v-if="openBlockUntil">
                             <!--Adicionar Leading Zeros-->
-                            <input type="number" v-model="blockUntilHours" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()">
-                            <input type="number" v-model="blockUntilMinutes" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()">
-                            <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()" v-on:click="addBlockUntil(blockEntryList[selectedBlockentry], blockUntilHours, blockUntilMinutes)">
+                            <input type="number" v-model="blockUntilHours" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <input type="number" v-model="blockUntilMinutes" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked" v-on:click="addBlockUntil(blockEntryList[selectedBlockentry], blockUntilHours, blockUntilMinutes)">
                                 Ativar Bloqueio
                             </button>
                         </div>
@@ -166,17 +166,17 @@ function removeBlockHoursInterval(blEntry: BlockEntry, intervalIndex: number){
                     <div v-if="openBlockHours">
                         <!--Adicionar Leading Zeros-->
                         <p>De</p>
-                        <input type="number" v-model="blockIntervalHours1" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()">
-                        <input type="number" v-model="blockIntervalMinutes1" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()">
+                        <input type="number" v-model="blockIntervalHours1" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" v-model="blockIntervalMinutes1" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
                         <p>---</p>
                         <p>Até</p>
-                        <input type="number" v-model="blockIntervalHours2" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()">
-                        <input type="number" v-model="blockIntervalMinutes2" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()">
+                        <input type="number" v-model="blockIntervalHours2" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" v-model="blockIntervalMinutes2" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
 
                         <p v-if="blockIntervalInconsistency">
                             *O começo do intervalo deve ser menor que o seu fim
                         </p>
-                        <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()" v-on:click="addBlockHoursInterval(
+                        <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked" v-on:click="addBlockHoursInterval(
                             blockEntryList[selectedBlockentry],
                             blockIntervalHours1,
                             blockIntervalMinutes1,
@@ -207,14 +207,14 @@ function removeBlockHoursInterval(blEntry: BlockEntry, intervalIndex: number){
                         <label for="limite-diario">Configurar limite diário</label>
                         <div v-if="openDailyLimit">
                             <!--Adicionar Leading Zeros-->
-                            <input type="number" v-model="dailyLimitHours" name="" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()">
-                            <input type="number" v-model="dailyLimitMinutes" id="" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()">
+                            <input type="number" v-model="dailyLimitHours" name="" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <input type="number" v-model="dailyLimitMinutes" id="" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
                             
-                            <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()" v-on:click="clearDailyLimit(blockEntryList[selectedBlockentry])">
+                            <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked" v-on:click="clearDailyLimit(blockEntryList[selectedBlockentry])">
                                 Limpar limite
                             </button>
 
-                            <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked()" v-on:click="setDailyLimit(blockEntryList[selectedBlockentry], dailyLimitHours, dailyLimitMinutes)">
+                            <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked" v-on:click="setDailyLimit(blockEntryList[selectedBlockentry], dailyLimitHours, dailyLimitMinutes)">
                                 Definir limite
                             </button>
                         </div>

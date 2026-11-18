@@ -1,4 +1,5 @@
 import { BlockEntryAccessTime } from "@/interfaces/BlockEntryAccessTime";
+import { BlockObject } from "@/interfaces/BlockObject";
 
 export class BlockEntry {
     private domainName: string;
@@ -212,6 +213,29 @@ export class BlockEntry {
 
         let oldAccessTime = this.accessTime
         let currently = new Date();
+
+        if (oldAccessTime.lastUpdate.getDate() != currently.getDate()) {
+            oldAccessTime.today = 0
+            if (Math.abs(currently.getDate() - oldAccessTime.lastUpdate.getDate()) >= 7 ||
+                oldAccessTime.lastUpdate.getDay() > currently.getDay()) {
+                oldAccessTime.lastWeek = oldAccessTime.curWeek;
+                oldAccessTime.curWeek = 0;
+            }
+        }
+
+        if (oldAccessTime.lastUpdate.getFullYear() == currently.getFullYear()){
+            if (oldAccessTime.lastUpdate.getMonth() == currently.getMonth()){
+            } else {
+                oldAccessTime.today = 0
+                oldAccessTime.lastMonth = oldAccessTime.curMonth;
+                oldAccessTime.curMonth = 0;
+            }
+        } else {
+            oldAccessTime.today = 0
+            oldAccessTime.lastMonth = oldAccessTime.curMonth;
+            oldAccessTime.curMonth = 0;
+        }
+
         /*
         let lastUpUTC = Date.UTC(oldAccessTime.lastUpdate.getFullYear(), oldAccessTime.lastUpdate.getMonth(), oldAccessTime.lastUpdate.getDate());
         let curUTC = Date.UTC(currently.getFullYear(), currently.getMonth(), currently.getDate());
@@ -223,7 +247,6 @@ export class BlockEntry {
 
         if(Math.floor((curUTC - lastUpUTC)/msDay) >= 7 + (currently.getDay() - oldAccessTime.lastUpdate.getDay())){
             oldAccessTime.lastWeek = oldAccessTime.curWeek;
-            oldAccessTime.curWeek = 0;
         }
 
         if (Math.floor((curUTC - lastUpUTC)/msDay) >= 30 + (currently.getDate() - oldAccessTime.lastUpdate.getDate()) || currently.getMonth() !== oldAccessTime.lastUpdate.getMonth()) {
@@ -248,12 +271,12 @@ export class BlockEntry {
         this.accessTime.total    += milisec
     }
 
-    public isBlocked(): boolean{
+    public isBlocked(): BlockObject{
         let currently = new Date();
         let curAccessTime = this.getAccessTime()
 
         if (this.getBlockedUntil() > currently){
-            return true;
+            return { isBlocked: true, blockType: 'blockUntil'}
         }
 
 
@@ -261,20 +284,20 @@ export class BlockEntry {
             let weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
             if (this.getBlockWeekDays().some((el) => {
                 if (weekdays[currently.getDay()].toLowerCase() === el.toLowerCase()) {
-                    return true;
+                    return { isBlocked: true, blockType: 'blockHour' }
                 }
-                return false
+                return { isBlocked: false, blockType: 'none' }
 
             })) {
-                return true;
+                return { isBlocked: true, blockType: 'blockHour' }
             }
         }
 
         if (curAccessTime.today >= this.getDailyLimitTime()){
-            return true;
+            return { isBlocked: true, blockType: 'timeUp' }
         }
 
-        return false
+        return { isBlocked: false, blockType: 'none' }
     }
 
 }

@@ -1,14 +1,18 @@
 import { BlockList } from "@/classes/BlockList";
 import { BlockEntry } from "@/classes/BlockEntry";
-import { clearAllIntervals, parseResultsBlockEntry } from "@/utils";
-import { setBlockEntryList } from "@/storage_utils";
+import { clearAllIntervals, parseResultsBlockEntry} from "@/utils";
+import { setBlockConfig, setBlockEntryList } from "@/storage_utils";
 
 export default defineBackground(() => {
 
   const initBlockEntries: Array<BlockEntry> = []
   var blockList: Array<BlockEntry> = []
+  var blockType: string = 'none'
   const usageIntervals: Array<NodeJS.Timeout> = []
+  //rever
+  
 
+  //////////////////////////////////////////////////////
   initBlockEntries.push(new BlockEntry('youtube.com'))
   initBlockEntries.push(new BlockEntry('instagram.com'))
   initBlockEntries[1].addAccessTime(1000 * 60 * 60 * 4)
@@ -18,7 +22,7 @@ export default defineBackground(() => {
   initBlockEntries.push(new BlockEntry('tiktok.com'))
   initBlockEntries[4].addAccessTime(1000 * 60 * 60 * 3)
   initBlockEntries.push(new BlockEntry('reddit.com'))
-
+  /////////////////////////////////////////////////////
 
   //Garantir q a lista não seja substituida ao atualizar a extensão ou o navegador.
   let currentlyBlocking = true;
@@ -29,6 +33,7 @@ export default defineBackground(() => {
       currentlyBlocking: currentlyBlocking,
       //blockLists: blockLists,
       blockList: initBlockEntries,
+      blockType: blockType,
     }, () => {});
     console.log('On Install: OK')
 
@@ -48,12 +53,13 @@ export default defineBackground(() => {
     });
   })
 
-  /*setInterval(() => {
+  setInterval(() => {
     for (var f = 0; f < blockList.length; f++){
       blockList[f].updateAccessTime();
     }
-  },20 * 60 * 1000)
-  */
+    setBlockConfig(blockList, blockType)
+  },5 * 60 * 1000)
+
 
   if (blockList.length < 1){
     console.log('Iniciando...')
@@ -67,13 +73,16 @@ export default defineBackground(() => {
 
 
   //Block logic
+
+  //Currently blocks anything in the blocklist
   browser.webRequest.onBeforeRequest.addListener(
-    (details)=> {
+    (details) => {
       if(!currentlyBlocking){
         return {cancel: false};
       }
 
       let cancel = blockList.some((blockedDomain:BlockEntry) => {
+
         let bDomainName = blockedDomain.getDomainName();
         let curDomain = new URL(details.url);
         let cancel = false;
@@ -81,7 +90,15 @@ export default defineBackground(() => {
         let theOne = Boolean(curDomain.hostname.indexOf(bDomainName) != -1);
 
         if (theOne) {
-          cancel = blockedDomain.isBlocked();
+          let blockRes = blockedDomain.isBlocked()
+          blockType = blockRes.blockType;
+          cancel = blockRes.isBlocked;
+
+          if (cancel === true){
+            let blUrl = new URL(browser.runtime.getURL('/blockPage.html'))
+            blUrl.search = `?ogdom=${curDomain.hostname}&bltype=${blockType}`
+            browser.tabs.update(details.tabId, {url: blUrl.href})
+          }
         }
 
         return cancel;
