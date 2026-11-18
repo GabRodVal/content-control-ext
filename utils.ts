@@ -1,7 +1,7 @@
 import { BlockEntry } from "@/classes/BlockEntry";
 import { BlockEntryImp } from "@/interfaces/BlockEntryImp";
 
-async function getCurrentDomain(): Promise<string> {
+/*async function getCurrentDomain(): Promise<string> {
     try {
         const tabs = await browser.tabs.query({ active: true, currentWindow: true });
         if (tabs.length > 0) {
@@ -23,7 +23,7 @@ async function getCurrentDomain(): Promise<string> {
         console.error("Erro ao acessar domínio da aba:", error);
         return "N/A";
     }
-}
+}*/
 
 export function cleanDomainName(dName: string){
 
@@ -100,6 +100,28 @@ export function clearAllIntervals(timOuts: Array<NodeJS.Timeout>): Array<NodeJS.
     return timOuts
 }
 
+export function verifyBlockType(bt:string): string{
+    if (bt === 'none'){
+        return '000'
+    }else if (bt === 'blockUntil'){
+        return '001'
+    } else if (bt === 'blockHour') {
+        return '010'
+    } else if (bt === 'timeUp') {
+        return '011'
+    } else if (bt === 'delayAccess') {
+        return '100'
+    } else if (bt === 'noDoom') {
+        return '101'
+    } else if (bt === 'malicious') {
+        return '110'
+    } else if (bt === 'other') {
+        return '111'
+    }
+
+    console.warn('BlockType Inválido')
+    return 'NAN'
+}
 
 /*
 {

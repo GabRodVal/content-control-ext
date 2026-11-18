@@ -1,6 +1,7 @@
 import { BlockEntry } from "@/classes/BlockEntry";
 import { BlockEntryImp } from "@/interfaces/BlockEntryImp";
 import { parseResultsBlockEntry } from "@/utils";
+import { BlockObject } from "./interfaces/BlockObject";
 
 export async function getBlockEntryList(): Promise<BlockEntry[]>{
     const result = await new Promise<{ blockList?: BlockEntryImp[] }>((resolve, reject) => {
@@ -32,6 +33,62 @@ export function setBlockEntryList(blocklist: BlockEntry[]): void {
         console.error(err)
     }
     
+}
+
+export async function getBlockConfig(){
+    const result = await new Promise<{ 
+        blockList?: BlockEntryImp[],
+        blockType?:string
+    }>((resolve, reject) => {
+        try {
+            browser.storage.local.get(["blockList", "blockType"])
+                .then(resolve)
+                .catch(reject as any);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+    if (result.blockList !== undefined && result.blockType !== undefined) {
+        return {blockList: parseResultsBlockEntry(result.blockList), blockType: result.blockType}
+    } else {
+        console.error('ERRO: getBlockEntryList retorna undefined => []')
+        return {};
+    }
+}
+
+export async function getBlockType() {
+    const result = await new Promise<{
+        blockType?: string
+    }>((resolve, reject) => {
+        try {
+            browser.storage.local.get(["blockType"])
+                .then(resolve)
+                .catch(reject as any);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+    if (result.blockType !== undefined) {
+        return result.blockType 
+    } else {
+        return 'na';
+    }
+}
+
+export function setBlockConfig(blocklist: BlockEntry[], blockType: string): void {
+    try {
+        browser.storage.local.set({
+            blockList: blocklist,
+            blockType: blockType,
+        }, () => {
+            console.log('setBlockEntry: Updated ^^')
+        });
+    } catch (err) {
+        console.error(err)
+    }
+
 }
 
 // {{`${Math.floor(blockEntryList[selectedBlockentry].getDailyLimitTime()/(1000 * 60 * 60))}h${Math.floor(blockEntryList[selectedBlockentry].getDailyLimitTime()/(1000 * 60)) - (Math.floor(blockEntryList[selectedBlockentry].getDailyLimitTime()/(1000 * 60 * 60)) * 60)}m`}}
