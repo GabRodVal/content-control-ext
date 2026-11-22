@@ -1,13 +1,27 @@
 <script lang="ts" setup>
-import { nextTick, ref, onBeforeMount, shallowRef } from 'vue';
+import { nextTick, ref, onBeforeMount, shallowRef, vModelCheckbox } from 'vue';
 import { BlockEntry } from '@/classes/BlockEntry';
 import { BlockEntryImp } from '@/interfaces/BlockEntryImp';
+import { BlockWeekDays } from '@/interfaces/BlockWeekDays';
 import { parseResultsBlockEntry, formatHoursMinutes } from '@/utils';
 import { getBlockEntryList, setBlockEntryList } from '@/storage_utils';
 
 const blockEntryList = shallowRef<BlockEntry[]>([]);
 const mounted = ref<boolean>(false)
 const selectedBlockentry = ref(-1)
+
+const blockWeekDays = ref<BlockWeekDays>({
+    blockByWeekday: false,
+    wDays: {
+        sunBlock: false,
+        monBlock: false,
+        tueBlock: false,
+        wedBlock: false,
+        thuBlock: false,
+        friBlock: false,
+        satBlock: false
+    }
+});
 
 const openBlockUntil = ref(false)
 const openBlockHours = ref(false)
@@ -109,6 +123,11 @@ function removeBlockHoursInterval(blEntry: BlockEntry, intervalIndex: number){
     updateBlockEntryList()
 }
 
+function updateWeekDays(blEntry:BlockEntry, bWeek:BlockWeekDays){
+    blEntry.setBlockWeekDays(bWeek);
+    updateBlockEntryList();
+}
+
 </script>
 
 <template>
@@ -117,7 +136,10 @@ function removeBlockHoursInterval(blEntry: BlockEntry, intervalIndex: number){
         <div class="settings-item" v-if="mounted">
             <label for="block-list-select">Bloqueio a Configurar:</label>
             <select v-model="selectedBlockentry" id="block-list-select">
-            <option v-for="(blcEnt, index) in blockEntryList" :key="index" :value="index" v-on:change="()=>{selectedBlockentry = index}">
+            <option v-for="(blcEnt, index) in blockEntryList" :key="index" :value="index" v-on:change="()=>{
+                selectedBlockentry = index
+                blockWeekDays = blockEntryList[selectedBlockentry].getBlockWeekDays()
+                }">
                 {{ `${blcEnt.getDomainName()}` }}
             </option>
             </select>
@@ -187,13 +209,28 @@ function removeBlockHoursInterval(blEntry: BlockEntry, intervalIndex: number){
                         </button>
                     </div>
                     <div>
-                        <div>
-                            <code v-for="wDay in blockEntryList[selectedBlockentry].getBlockWeekDays()">
-                                {{ wDay }}
-                            </code>
+
+                        <input type="checkbox" id="weekday-toggle" v-model="blockWeekDays.blockByWeekday">
+                        <label for="weekday-toggle">{{blockWeekDays.blockByWeekday}}</label>
+
+                        <div v-bind:hidden="!blockWeekDays.blockByWeekday || blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            
+                            <input type="checkbox" id="sun-block" v-model="blockWeekDays.wDays.sunBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                            <label for="sun-block">Domingo</label>
+                            <input type="checkbox" id="mon-block" v-model="blockWeekDays.wDays.monBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                            <label for="mon-block">Segunda-feira</label>
+                            <input type="checkbox" id="tue-block" v-model="blockWeekDays.wDays.tueBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                            <label for="tue-block">Terça-feira</label>
+                            <input type="checkbox" id="wed-block" v-model="blockWeekDays.wDays.wedBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                            <label for="wed-block">Quarta-feira</label>
+                            <input type="checkbox" id="thu-block" v-model="blockWeekDays.wDays.thuBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                            <label for="thu-block">Quinta-feira</label>
+                            <input type="checkbox" id="fri-block" v-model="blockWeekDays.wDays.friBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                            <label for="fri-block">Sexta-feira</label>
+                            <input type="checkbox" id="sat-block" v-model="blockWeekDays.wDays.satBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                            <label for="sat-block">Sábado</label>
                         </div>
-                        <button>toggle dias da semana</button>
-                        <code>CONSERTAR 'WEEKDAYS'</code>
+                    
                     </div>
                 </div>
                 <div>

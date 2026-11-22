@@ -1,12 +1,13 @@
 import { BlockEntryAccessTime } from "@/interfaces/BlockEntryAccessTime";
 import { BlockObject } from "@/interfaces/BlockObject";
+import { BlockWeekDays } from "@/interfaces/BlockWeekDays";
 
 export class BlockEntry {
     private domainName: string;
     private blockedUntil: Date;
     private blockHours: Array<[string, string]>;
     //Fix blockWeekDays to Boolean[7]
-    private blockWeekDays: string[];
+    private blockWeekDays: BlockWeekDays;
     private dailyLimit: Boolean;
     private dailyLimitTime: number; 
     private lastAccess: Date;
@@ -20,7 +21,18 @@ export class BlockEntry {
     public constructor(domainName: string,
         blockedUntil: Date = new Date(2000, 1, 1),
         blockHours: [string, string][] = [],
-        blockWeekdays: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        blockWeekdays: BlockWeekDays = {
+            blockByWeekday: false,
+            wDays:{
+                sunBlock: false,
+                monBlock: false,
+                tueBlock: false,
+                wedBlock: false,
+                thuBlock: false,
+                friBlock: false,
+                satBlock: false,
+                }
+        },
         dailyLimit:Boolean = false,
         dailyLimitTime: number = 24 * 60 * 60 * 1000,
         lastAccess: Date = new Date(),
@@ -133,10 +145,15 @@ export class BlockEntry {
         return false
     }
 
-    public getBlockWeekDays(): string[]{
+    public getBlockWeekDays(): BlockWeekDays{
         return this.blockWeekDays
     }
 
+    public setBlockWeekDays(wkDays:BlockWeekDays){
+        this.blockWeekDays = wkDays
+    }
+
+    /*
     public pushBlockWeekDays(blDay: string){
         let curBlDays = this.blockWeekDays
 
@@ -173,7 +190,7 @@ export class BlockEntry {
 
         this.blockWeekDays = newBlDays
     }
-
+    */
     public getDailyLimit(): Boolean{
         return this.dailyLimit
     }
@@ -281,16 +298,41 @@ export class BlockEntry {
 
 
         if (this.isInBlockingInterval()) {
-            let weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            if (this.getBlockWeekDays().some((el) => {
+            let bWkDays = this.getBlockWeekDays()
+            if (bWkDays.blockByWeekday == true){
+                if (currently.getDay() == 0 && bWkDays.wDays.sunBlock == true) {
+                    return { isBlocked: true, blockType: 'blockHour' }
+                } else if (currently.getDay() == 1 && bWkDays.wDays.monBlock == true) {
+                    return { isBlocked: true, blockType: 'blockHour' }
+                } else if (currently.getDay() == 2 && bWkDays.wDays.tueBlock == true) {
+                    return { isBlocked: true, blockType: 'blockHour' }
+                } else if (currently.getDay() == 3 && bWkDays.wDays.wedBlock == true) {
+                    return { isBlocked: true, blockType: 'blockHour' }
+                } else if (currently.getDay() == 4 && bWkDays.wDays.thuBlock == true) {
+                    return { isBlocked: true, blockType: 'blockHour' }
+                } else if (currently.getDay() == 5 && bWkDays.wDays.friBlock == true) {
+                    return { isBlocked: true, blockType: 'blockHour' }
+                } else if (currently.getDay() == 6 && bWkDays.wDays.satBlock == true) {
+                    return { isBlocked: true, blockType: 'blockHour' }
+                } else {
+                    return { isBlocked: true, blockType: 'blockHour' }
+                }
+            } else {
+                return { isBlocked: true, blockType: 'blockHour' }
+            }
+            
+            //let weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            /*if (this.getBlockWeekDays().some((el) => {
                 if (weekdays[currently.getDay()].toLowerCase() === el.toLowerCase()) {
                     return { isBlocked: true, blockType: 'blockHour' }
                 }
+
                 return { isBlocked: false, blockType: 'none' }
 
-            })) {
-                return { isBlocked: true, blockType: 'blockHour' }
-            }
+            }))
+            {
+                
+            }*/
         }
 
         if (curAccessTime.today >= this.getDailyLimitTime()){
