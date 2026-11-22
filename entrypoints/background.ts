@@ -1,5 +1,6 @@
 import { BlockList } from "@/classes/BlockList";
 import { BlockEntry } from "@/classes/BlockEntry";
+import { CosmeticFilter } from "@/classes/CosmeticFilter";
 import { clearAllIntervals, parseResultsBlockEntry} from "@/utils";
 import { setBlockConfig, setBlockEntryList } from "@/storage_utils";
 
@@ -10,7 +11,9 @@ export default defineBackground(() => {
   var blockType: string = 'none'
   const usageIntervals: Array<NodeJS.Timeout> = []
   //rever
-  
+  const cosmeticFilterList = new CosmeticFilter([],'0')
+  const filterList: Array<String> = []
+  const filterVersion: string = '0'
 
   //////////////////////////////////////////////////////
   initBlockEntries.push(new BlockEntry('youtube.com'))
@@ -31,11 +34,26 @@ export default defineBackground(() => {
   browser.runtime.onInstalled.addListener(async () => {
     browser.storage.local.set({
       currentlyBlocking: currentlyBlocking,
+      filterEnabled: true,
+      //filterList: filterList,
+      //filterVersion: filterVersion,
       //blockLists: blockLists,
       blockList: initBlockEntries,
       blockType: blockType,
     }, () => {});
+
     console.log('On Install: OK')
+
+    await nextTick()
+
+    await cosmeticFilterList.forceUpdateFilter()
+
+    await nextTick()
+
+    browser.storage.local.set({
+      filterList: cosmeticFilterList.getFilterList(),
+      filterVersion: cosmeticFilterList.getFilterVersion(),
+    }, () => { });
 
     await nextTick()
     console.log('Instalando...')
