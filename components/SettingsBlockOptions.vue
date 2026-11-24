@@ -23,9 +23,15 @@ const blockWeekDays = ref<BlockWeekDays>({
     }
 });
 
-const openBlockUntil = ref(false)
-const openBlockHours = ref(false)
-const openDailyLimit = ref(false)
+const openBlockUntil = ref<boolean>(false)
+const openBlockHours = ref<boolean>(false)
+const openDailyLimit = ref<boolean>(false)
+const openShortBlock = ref<boolean>(false)
+
+const autoplayBlockEnabled = ref<boolean>(false)
+const doomscrollingBlockEnabled = ref<boolean>(false)
+
+const doomscrollingBlockRate = ref(4000.0)
 
 const blockUntilHours = ref(0)
 const blockUntilMinutes = ref(0)
@@ -39,12 +45,10 @@ const blockIntervalInconsistency = ref(false);
 const dailyLimitHours = ref(0)
 const dailyLimitMinutes = ref(0)
 
+const shortBlockLimit = ref(0)
+const shortBlockDuration = ref(0)
+
 onBeforeMount(async () => {
-  /*await browser.storage.local.get(["blockList"]).then((result)=>{
-    blockEntryList.value = parseResultsBlockEntry(result.blockList);
-  }).catch((err) => {
-    console.error(err)
-  })*/
 
     blockEntryList.value = await getBlockEntryList();
 
@@ -59,7 +63,9 @@ async function updateBlockEntryList(){
 
         await nextTick();
 
-        blockEntryList.value = await getBlockEntryList()
+        let blPromise:Array<BlockEntry> =  await getBlockEntryList()
+        await nextTick();
+        blockEntryList.value = blPromise
         console.log('SettingsBlockOptions: BlockEntryList => Updated!')
     } else {
         console.warn('SettingsBlockOptions: BlockEntryList =>Not Updated...', `mounted:${mounted} | typeof_match:${typeof(blockEntryList.value) === typeof(Array<BlockEntry>)}`)
@@ -128,17 +134,76 @@ function updateWeekDays(blEntry:BlockEntry, bWeek:BlockWeekDays){
     updateBlockEntryList();
 }
 
+async function updateShortBlock(blEntry:BlockEntry){
+    await nextTick()
+    console.log({
+        enabled:openShortBlock.value,
+        bInterval:shortBlockDuration.value,
+        bLimit:shortBlockLimit.value
+    })
+    blEntry.setShortBlock(openShortBlock.value)
+    blEntry.setShortBlockDuration(shortBlockDuration.value)
+    blEntry.setShortBlockLimit(shortBlockLimit.value)
+
+    await nextTick()
+
+    console.log(blEntry.getShortBlock())
+    
+    updateBlockEntryList();
+    console.log(`POS,`)
+    console.log(blEntry.getShortBlock())
+}
+
+async function updateAutoplay(blEntry:BlockEntry) {
+    await nextTick()
+    blEntry.setAutoplayBlockEnabled(autoplayBlockEnabled.value)
+    updateBlockEntryList();
+}
+
+async function updateDoomscrolling(blEntry:BlockEntry){
+    await nextTick()
+    blEntry.setDoomscrollingBlock(doomscrollingBlockEnabled.value, doomscrollingBlockRate.value)
+    updateBlockEntryList();
+}
+
+const fRender = ref(true)
+const forceUpdate = async(ind:number) => {
+
+    await nextTick()
+    blockWeekDays.value = blockEntryList.value[selectedBlockentry.value].getBlockWeekDays()
+
+    openShortBlock.value = blockEntryList.value[selectedBlockentry.value].getShortBlock().shortBlock
+    openBlockHours.value = blockEntryList.value[selectedBlockentry.value].getBlockHours().length > 0
+
+    shortBlockDuration.value = blockEntryList.value[selectedBlockentry.value].getShortBlock().shortBlockDur
+    shortBlockLimit.value = blockEntryList.value[selectedBlockentry.value].getShortBlock().shortBlockLimit
+
+    autoplayBlockEnabled.value = blockEntryList.value[selectedBlockentry.value].getAutoplayBlockEnabled()
+    doomscrollingBlockEnabled.value = blockEntryList.value[selectedBlockentry.value].getDoomscrollingBlockEnabled()
+    doomscrollingBlockRate.value = blockEntryList.value[selectedBlockentry.value].getDoomscrollingRate()
+
+    await nextTick()
+
+}
+
 </script>
 
 <template>
-    <div class="settings-content">
+    <div class="settings-content" v-if="fRender">
         <p>Opções de Bloqueio</p>
         <div class="settings-item" v-if="mounted">
             <label for="block-list-select">Bloqueio a Configurar:</label>
             <select v-model="selectedBlockentry" id="block-list-select">
-            <option v-for="(blcEnt, index) in blockEntryList" :key="index" :value="index" v-on:change="()=>{
+            <option v-for="(blcEnt, index) in blockEntryList" :key="index" :value="index" v-on:click="async ()=>{
+                await nextTick()
                 selectedBlockentry = index
-                blockWeekDays = blockEntryList[selectedBlockentry].getBlockWeekDays()
+                console.log(`FRENDER`)
+                fRender = false
+                await forceUpdate(selectedBlockentry)
+                console.log('updated')
+
+                fRender = true
+                //vm.$forceUpdate()
                 }">
                 {{ `${blcEnt.getDomainName()}` }}
             </option>
@@ -159,8 +224,8 @@ function updateWeekDays(blEntry:BlockEntry, bWeek:BlockWeekDays){
                         <label for="bloqueio-ativo">Realizar bloqueio</label>
                         <div v-if="openBlockUntil">
                             <!--Adicionar Leading Zeros-->
-                            <input type="number" v-model="blockUntilHours" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
-                            <input type="number" v-model="blockUntilMinutes" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <input type="number" v-model.number="blockUntilHours" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <input type="number" v-model.number="blockUntilMinutes" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
                             <button v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked" v-on:click="addBlockUntil(blockEntryList[selectedBlockentry], blockUntilHours, blockUntilMinutes)">
                                 Ativar Bloqueio
                             </button>
@@ -188,12 +253,12 @@ function updateWeekDays(blEntry:BlockEntry, bWeek:BlockWeekDays){
                     <div v-if="openBlockHours">
                         <!--Adicionar Leading Zeros-->
                         <p>De</p>
-                        <input type="number" v-model="blockIntervalHours1" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
-                        <input type="number" v-model="blockIntervalMinutes1" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" v-model.number="blockIntervalHours1" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" v-model.number="blockIntervalMinutes1" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
                         <p>---</p>
                         <p>Até</p>
-                        <input type="number" v-model="blockIntervalHours2" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
-                        <input type="number" v-model="blockIntervalMinutes2" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" v-model.number="blockIntervalHours2" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" v-model.number="blockIntervalMinutes2" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
 
                         <p v-if="blockIntervalInconsistency">
                             *O começo do intervalo deve ser menor que o seu fim
@@ -256,6 +321,48 @@ function updateWeekDays(blEntry:BlockEntry, bWeek:BlockWeekDays){
                             </button>
                         </div>
                     </div>
+                </div>
+                <div>
+                    <p>Bloqueio Breve</p>
+                    <input type="checkbox" name="short-block-enabled" id="short-block-enabled" v-model="openShortBlock" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                    <label for="short-block-enabled">Habilitar funcionalidade de Bloqueio Breve?</label>
+                    <div v-if="openShortBlock">
+                        <p>Bloquear após</p>
+                        <input type="radio" name="short-block-when" id="short-hour-half" v-bind:value="30*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <label for="short-hour-half">30 minutos</label>
+                        <input type="radio" name="short-block-when" id="short-hour-full" v-bind:value="60*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <label for="short-hour-full">1 hora</label>
+                        <input type="radio" name="short-block-when" id="short-hour-double" v-bind:value="120*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <label for="short-hour-double">2 horas</label>
+                        <input type="radio" name="short-block-when" id="short-hour-fourx" v-bind:value="240*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <label for="short-hour-fourx">4 horas</label>
+
+                        <p>Duração de bloqueio</p>
+                        <input type="radio" name="short-block-dur" id="short-two-min" v-bind:value="2*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <label for="short-two-min">2 minutos</label>
+                        <input type="radio" name="short-block-dur" id="short-five-min" v-bind:value="5*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <label for="short-five-min">5 minutos</label>
+                        <input type="radio" name="short-block-dur" id="short-ten-min" v-bind:value="10*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <label for="short-ten-min">10 minutos</label>
+                        <input type="radio" name="short-block-dur" id="short-thirty-min" v-bind:value="30*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <label for="short-thirty-min">30 minutos</label>
+
+
+                        <p>Bloqueios Breves Opcionais</p>
+                        <div>
+                            <div>
+                                <input type="checkbox" name="autoplay-block" id="autoplay-block" v-model="autoplayBlockEnabled" v-on:change="updateAutoplay(blockEntryList[selectedBlockentry])">
+                                <label for="autoplay-block">Habilitar Bloqueio de Autoplay/Redirecionamento?</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" name="doomscrolling-block" id="doomscrolling-block" v-model="doomscrollingBlockEnabled" v-on:change="updateDoomscrolling(blockEntryList[selectedBlockentry])">
+                                <label for="doomscrolling-block">Habilitar Bloqueio de "Doomscrolling"(Páginas sem fim)?</label>
+                                <input type="number" v-model.number="doomscrollingBlockRate" max="20000.0" min="500.0" step="100.0" placeholder="4000.0" v-on:change="updateDoomscrolling(blockEntryList[selectedBlockentry])" v-bind:disabled="!doomscrollingBlockEnabled">
+                            </div>
+
+                        </div>
+                    </div>
+                    
                 </div>
             </div>
         </div>

@@ -9,5 +9,14 @@ export interface BlockEntryImp {
     dailyLimit: Boolean,
     dailyLimitTime: number,
     lastAccess: Date,
-    accessTime: BlockEntryAccessTime
+    accessTime: BlockEntryAccessTime,
+    shortBlock: boolean,
+    shortBlockAccessTime: number,
+    shortBlockLimit: number,
+    shortBlockDuration: number,
+    shortBlockedUntil: Date,
+    doomScrollingProtection: boolean,
+    doomScrollingRate: number,
+
+    autoPlayBlocker: boolean,
 }

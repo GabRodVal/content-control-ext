@@ -13,6 +13,17 @@ export class BlockEntry {
     private lastAccess: Date;
     private accessTime: BlockEntryAccessTime;
 
+    private shortBlock: boolean;
+    private shortBlockAccessTime: number;
+    private shortBlockLimit: number;
+    private shortBlockDuration: number;
+    private shortBlockedUntil: Date;
+
+    private doomScrollingProtection: boolean;
+    private doomScrollingRate: number;
+
+    private autoPlayBlocker: boolean;
+
     //NOT google.com
     //NOT mail.google.com
     //NOT bing
@@ -44,7 +55,18 @@ export class BlockEntry {
             curMonth: 0,
             lastMonth: 0,
             lastUpdate: new Date()
-        }){
+        },
+        shortBlock: boolean = false,
+        shortBlockAccessTime: number = 0,
+        shortBlockLimit: number = 60 * 60 * 1000,
+        shortBlockDuration: number = 5 * 60 * 1000,
+        shortBlockedUntil: Date = new Date(0),
+
+        doomScrollingProtection: boolean = false,
+        doomScrollingRate: number = 4000.0,
+
+        autoPlayBlocker: boolean = false
+        ){
         //Resolver formatação
         this.domainName = domainName;
         this.blockedUntil =  blockedUntil;//new Date(2000, 1, 1);
@@ -53,15 +75,21 @@ export class BlockEntry {
         this.dailyLimit = dailyLimit;//false;
         this.dailyLimitTime = dailyLimitTime//24 * 60 * 60 * 1000;
         this.lastAccess = lastAccess;// new Date();
-        this.accessTime = accessTime/*{
-            total: 0,
-            today: 0,
-            curWeek: 0,
-            lastWeek: 0,
-            curMonth: 0,
-            lastMonth: 0,
-            lastUpdate: new Date()
-        };*/
+        this.accessTime = accessTime
+        //Bloqueio Rapido
+        this.shortBlock = shortBlock
+        this.shortBlockAccessTime = shortBlockAccessTime
+        this.shortBlockLimit = shortBlockLimit
+        this.shortBlockDuration = shortBlockDuration
+        this.shortBlockedUntil = shortBlockedUntil
+
+        this.doomScrollingProtection = doomScrollingProtection
+        this.doomScrollingRate = doomScrollingRate
+
+        this.autoPlayBlocker = autoPlayBlocker
+
+        console.log(`CONSTRUCTOR${shortBlock}`)
+        
     }
 
     public validateName(): Boolean{
@@ -153,44 +181,6 @@ export class BlockEntry {
         this.blockWeekDays = wkDays
     }
 
-    /*
-    public pushBlockWeekDays(blDay: string){
-        let curBlDays = this.blockWeekDays
-
-        //["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-        let lowBlDay = blDay.toLowerCase()
-        if (lowBlDay === 'sunday' ||
-            lowBlDay === 'monday' ||
-            lowBlDay === 'tuesday'||
-            lowBlDay === 'wednesday'||
-            lowBlDay === 'thursday' ||
-            lowBlDay === 'friday' ||
-            lowBlDay === 'saturday') {
-                if (curBlDays.findIndex((el, id) => {
-                    if (el.toLowerCase() === lowBlDay) return true;
-                    return false
-                }
-                ) === -1) {
-                    curBlDays.push(lowBlDay)
-                    this.blockWeekDays = curBlDays
-                } else {
-                    console.warn(`AVISO: Dia da semana repetido: ${blDay}`)
-                }
-            } else {
-                console.warn(`AVISO: Dia da semana inválido: ${blDay}`)
-            }
-
-    }
-
-    public removeBlockWeekDays(blDay: string) {
-        let oldBlDays = this.blockWeekDays
-
-        let newBlDays = oldBlDays.filter((el, id) => el !== blDay.toLowerCase());
-
-        this.blockWeekDays = newBlDays
-    }
-    */
     public getDailyLimit(): Boolean{
         return this.dailyLimit
     }
@@ -226,13 +216,15 @@ export class BlockEntry {
 
     public updateAccessTime(){
         // change to get functions?
-        const msDay = 24 * 60 * 60 * 1000;
+        //const msDay = 24 * 60 * 60 * 1000;
 
         let oldAccessTime = this.accessTime
         let currently = new Date();
 
         if (oldAccessTime.lastUpdate.getDate() != currently.getDate()) {
             oldAccessTime.today = 0
+            this.shortBlockAccessTime = 0
+            
             if (Math.abs(currently.getDate() - oldAccessTime.lastUpdate.getDate()) >= 7 ||
                 oldAccessTime.lastUpdate.getDay() > currently.getDay()) {
                 oldAccessTime.lastWeek = oldAccessTime.curWeek;
@@ -251,30 +243,13 @@ export class BlockEntry {
             oldAccessTime.today = 0
             oldAccessTime.lastMonth = oldAccessTime.curMonth;
             oldAccessTime.curMonth = 0;
+            this.shortBlockAccessTime = 0
         }
-
-        /*
-        let lastUpUTC = Date.UTC(oldAccessTime.lastUpdate.getFullYear(), oldAccessTime.lastUpdate.getMonth(), oldAccessTime.lastUpdate.getDate());
-        let curUTC = Date.UTC(currently.getFullYear(), currently.getMonth(), currently.getDate());
-
-
-        if (Math.floor((curUTC - lastUpUTC) / msDay) >= 1 || currently.getDay() !== oldAccessTime.lastUpdate.getDay()) {
-            oldAccessTime.today = 0;
-        }
-
-        if(Math.floor((curUTC - lastUpUTC)/msDay) >= 7 + (currently.getDay() - oldAccessTime.lastUpdate.getDay())){
-            oldAccessTime.lastWeek = oldAccessTime.curWeek;
-        }
-
-        if (Math.floor((curUTC - lastUpUTC)/msDay) >= 30 + (currently.getDate() - oldAccessTime.lastUpdate.getDate()) || currently.getMonth() !== oldAccessTime.lastUpdate.getMonth()) {
-            oldAccessTime.lastMonth = oldAccessTime.curMonth;
-            oldAccessTime.curMonth = 0;
-        }
-        */
 
         oldAccessTime.lastUpdate = currently;
 
         this.accessTime = oldAccessTime;
+
     }
 
     public addAccessTime(milisec:number){
@@ -285,12 +260,18 @@ export class BlockEntry {
         this.accessTime.curWeek  += milisec
         this.accessTime.curMonth += milisec
 
+        this.shortBlockAccessTime += milisec
+
         this.accessTime.total    += milisec
     }
 
     public isBlocked(): BlockObject{
         let currently = new Date();
         let curAccessTime = this.getAccessTime()
+        
+        if (this.isShortBlocked()){
+            return { isBlocked:true, blockType: 'shortBlock'}
+        }
 
         if (this.getBlockedUntil() > currently){
             return { isBlocked: true, blockType: 'blockUntil'}
@@ -320,19 +301,6 @@ export class BlockEntry {
             } else {
                 return { isBlocked: true, blockType: 'blockHour' }
             }
-            
-            //let weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            /*if (this.getBlockWeekDays().some((el) => {
-                if (weekdays[currently.getDay()].toLowerCase() === el.toLowerCase()) {
-                    return { isBlocked: true, blockType: 'blockHour' }
-                }
-
-                return { isBlocked: false, blockType: 'none' }
-
-            }))
-            {
-                
-            }*/
         }
 
         if (curAccessTime.today >= this.getDailyLimitTime()){
@@ -342,4 +310,85 @@ export class BlockEntry {
         return { isBlocked: false, blockType: 'none' }
     }
 
+    public getShortBlock(){
+        return {
+            shortBlock: this.shortBlock,
+            shortBlockDur: this.shortBlockDuration,
+            shortBlockLimit: this.shortBlockLimit,
+            shortBlockAccessTime: this.shortBlockAccessTime
+        }
+    }
+    public setShortBlock(toBlock:boolean){
+        console.log(`setShortBlock\nBEF:${this.shortBlock} | AFT:${toBlock}`)
+        this.shortBlock = toBlock;
+    }
+    public setShortBlockDuration(bDur:number){
+        this.shortBlockDuration = bDur;
+    }
+    public setShortBlockLimit(bLim:number){
+        this.shortBlockLimit = bLim;
+    }
+
+
+    public isShortBlocked():Boolean{        
+        if (this.shortBlock){
+            let currently = new Date();
+            if (this.shortBlockedUntil < currently){
+                if (this.shortBlockAccessTime > this.shortBlockLimit){
+                    this.shortBlockedUntil = new Date(currently.getTime() + this.shortBlockDuration)
+                    this.blockedUntil = this.shortBlockedUntil
+                    this.shortBlockAccessTime = 0
+                    return true
+                } else {
+                    return false
+                }
+            } else {
+                return true
+            }
+        } else {
+            return false
+        }
+    }
+
+    public blockByAutoplay(){
+        if (this.getAutoplayBlockEnabled()){
+            let currently = new Date();
+            if (!this.isShortBlocked()){
+                //Bloqueio mais curto por padrão
+                this.shortBlockedUntil = new Date(currently.getTime() + (2 * 60 * 1000))
+                this.blockedUntil = this.shortBlockedUntil
+            }
+        }
+    }
+
+    public checkDoomscrolling(vh:number, ph:number){
+        let sr = (ph/vh) * 100.0
+        if (this.getDoomscrollingBlockEnabled()){
+            if (sr >= this.getDoomscrollingRate()) {
+                let currently = new Date();
+                this.shortBlockedUntil = new Date(currently.getTime() + this.shortBlockDuration)
+                this.blockedUntil = this.shortBlockedUntil
+            }
+        }
+
+    }
+
+    public getAutoplayBlockEnabled(){
+        return this.autoPlayBlocker
+    }
+
+    public setAutoplayBlockEnabled(enab:boolean){
+        this.autoPlayBlocker = enab
+    }
+
+    public getDoomscrollingBlockEnabled(){
+        return this.doomScrollingProtection
+    }
+    public getDoomscrollingRate(){
+        return this.doomScrollingRate
+    }
+    public setDoomscrollingBlock(isEnabled:boolean,dsRate:number){
+        this.doomScrollingProtection = isEnabled
+        this.doomScrollingRate = dsRate
+    }
 }

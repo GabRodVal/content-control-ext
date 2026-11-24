@@ -2,7 +2,7 @@ import { BlockList } from "@/classes/BlockList";
 import { BlockEntry } from "@/classes/BlockEntry";
 import { CosmeticFilter } from "@/classes/CosmeticFilter";
 import { clearAllIntervals, parseResultsBlockEntry} from "@/utils";
-import { setBlockConfig, setBlockEntryList } from "@/storage_utils";
+import { getBlockConfig, setBlockConfig, setBlockEntryList } from "@/storage_utils";
 
 export default defineBackground(() => {
 
@@ -31,6 +31,7 @@ export default defineBackground(() => {
   let currentlyBlocking = true;
   //let blockLists = [createBlockList("Lista Padrao", ["youtube.com", "x.com", "tiktok.com"])];
 
+  //Ao instalar
   browser.runtime.onInstalled.addListener(async () => {
     browser.storage.local.set({
       currentlyBlocking: currentlyBlocking,
@@ -71,14 +72,18 @@ export default defineBackground(() => {
     });
   })
 
+  //Sem condicional, atualiza tempo de acesso
   setInterval(() => {
     for (var f = 0; f < blockList.length; f++){
       blockList[f].updateAccessTime();
     }
+    console.log(blockList)
     setBlockConfig(blockList, blockType)
   },5 * 60 * 1000)
 
 
+  //Não corre durante a instalação
+  //Executa se blocklist estiver vazia
   if (blockList.length < 1){
     console.log('Iniciando...')
 
@@ -91,9 +96,9 @@ export default defineBackground(() => {
 
 
   //Block logic
-
   //Currently blocks anything in the blocklist
   browser.webRequest.onBeforeRequest.addListener(
+    //(details) => {
     (details) => {
       if(!currentlyBlocking){
         return {cancel: false};
@@ -112,7 +117,12 @@ export default defineBackground(() => {
           blockType = blockRes.blockType;
           cancel = blockRes.isBlocked;
 
-          if (cancel === true){
+
+          if (cancel === true && !details.thirdParty){
+            console.log('DETAILS')
+            console.log(details)
+            setTimeout(()=>{},500)
+            //let curTab = browser.tabs.get(details.tabId)
             let blUrl = new URL(browser.runtime.getURL('/blockPage.html'))
             blUrl.search = `?ogdom=${curDomain.hostname}&bltype=${blockType}`
             browser.tabs.update(details.tabId, {url: blUrl.href})
@@ -184,7 +194,7 @@ export default defineBackground(() => {
 
 
             let theOne = Boolean(curDomain.indexOf(bDomainName) != -1);
-            console.log('the one:', bDomainName, theOne)
+            //console.log('the one:', bDomainName, theOne)
 
             if (theOne) {
               usageBeholders = clearAllIntervals(usageBeholders)
@@ -192,9 +202,12 @@ export default defineBackground(() => {
               usageBeholders.push(setInterval(() => {
                 var newInterval = new Date();
                 var timeAdded = newInterval.getTime() - lastInterval.getTime();
+                console.log(`BEF:${blockList[index].getShortBlock().shortBlock}`)
                 blockList[index].addAccessTime(timeAdded);
+                console.log(`AFT:${blockList[index].getShortBlock().shortBlock}`)
+
                 accumulatedTime += timeAdded;
-                console.log(`${bDomainName}: +2.5s! (${timeAdded})| ${blockList[index].getAccessTime().today}`)
+                console.log(`${bDomainName}: +2.5s! (${timeAdded})| ${blockList[index].getAccessTime().today} | sB ${blockList[index].getShortBlock().shortBlock}`)
 
                 if (accumulatedTime > 1000 * 60 * 1) {
                   setBlockEntryList(blockList);
@@ -215,128 +228,4 @@ export default defineBackground(() => {
       }
     }
   })})
-
-  /*browser.windows.onFocusChanged.addListener(async () => {
-    if (usageBeholder !== null) {
-      clearInterval(usageBeholder);
-    }
-
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (tabs.length > 0) {
-      const tabUrl: string | undefined = tabs[0]?.url;
-      if (tabUrl) {
-        blockList.map(blockedDomain => {
-          let bDomainName = blockedDomain.getDomainName();
-          let curDomain = new URL(tabUrl);
-
-          let theOne = Boolean(curDomain.hostname.indexOf(bDomainName) != -1);
-
-          if (theOne) {
-            if (usageBeholder !== null) {
-              clearInterval(usageBeholder);
-            }
-            usageBeholder = setInterval(() => {
-              blockedDomain.addAccessTime(1000);
-              accumulatedTime += 1000;
-              console.log(`${bDomainName}: +1s!`)
-
-              if (accumulatedTime > 1000 * 60 * 2) {
-                browser.storage.local.set({
-                  blockList: blockList,
-                }, () => { });
-                accumulatedTime = 0;
-                console.log('Time accumulated')
-              }
-            }, 1000);
-          }
-        })
-      }
-    }
-  })*/
-
-  /*browser.tabs.onUpdated.addListener(async () => {
-    if (usageBeholder !== null) {
-      clearInterval(usageBeholder);
-    }
-
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (tabs.length > 0) {
-      const tabUrl: string | undefined = tabs[0]?.url;
-      if (tabUrl) {
-        blockList.map(blockedDomain => {
-          let bDomainName = blockedDomain.getDomainName();
-          let curDomain = new URL(tabUrl);
-
-          let theOne = Boolean(curDomain.hostname.indexOf(bDomainName) != -1);
-
-          if (theOne) {
-            if (usageBeholder !== null) {
-              clearInterval(usageBeholder);
-            }
-            usageBeholder = setInterval(() => {
-              blockedDomain.addAccessTime(3000);
-              accumulatedTime += 3000;
-              console.log(`${bDomainName}: +3s!`)
-
-              if (accumulatedTime > 3000 * 60 * 3) {
-                browser.storage.local.set({
-                  blockList: blockList,
-                }, () => { });
-                accumulatedTime = 0;
-                console.log('Time accumulated')
-              }
-            }, 3000);
-          }
-        })
-      } 
-    }
-  })
-
-  //browser.windows.onFocusChanged.addListener((windowId) => {
-  browser.tabs.onActivated.addListener(async (actInfo) => {
-    console.log(`Aba N#${actInfo.tabId}: Em atividade`);
-    console.log(`Janela N#${actInfo.windowId}: Em atividade`);
-    
-    if(usageBeholder !== null){
-      clearInterval(usageBeholder);
-    }
-
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (tabs.length > 0) {
-      const tabUrl: string | undefined = tabs[0]?.url;
-      if (tabUrl) {
-        let match = blockList.some(blockedDomain => {
-          let bDomainName = blockedDomain.getDomainName();
-          let curDomain = new URL(tabUrl);
-
-          let theOne = Boolean(curDomain.hostname.indexOf(bDomainName) != -1);
-
-          if (theOne) {
-            if (usageBeholder !== null) {
-              clearInterval(usageBeholder);
-            }
-            usageBeholder = setInterval(() => {
-              blockedDomain.addAccessTime(3000);
-              accumulatedTime += 3000;
-              console.log(`${bDomainName}: +3s!`)
-
-
-              if (accumulatedTime > 1000 * 60 * 3) {
-                browser.storage.local.set({
-                  blockList: blockList,
-                }, () => { });
-                accumulatedTime = 0;
-                console.log('Time accumulated')
-              }
-            }, 3000);
-          }
-
-          return theOne;
-
-        })
-      } 
-    }
-
-  })
-*/
 });

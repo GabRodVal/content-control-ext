@@ -27,7 +27,8 @@ export function setBlockEntryList(blocklist: BlockEntry[]): void {
         browser.storage.local.set({
             blockList: blocklist,
         }, () => {
-            console.log('setBlockEntry: Updated ^^')
+            console.log(blocklist)
+            console.log(`setBlockEntry: Updated ^^ `)
         });
     } catch (err) {
         console.error(err)
@@ -83,7 +84,13 @@ export function setBlockConfig(blocklist: BlockEntry[], blockType: string): void
             blockList: blocklist,
             blockType: blockType,
         }, () => {
+
+            console.log('before')
+            console.log(blocklist)
             console.log('setBlockEntry: Updated ^^')
+
+            console.log('after')
+            console.log(browser.storage.local.get({bl:'blockList'}))
         });
     } catch (err) {
         console.error(err)

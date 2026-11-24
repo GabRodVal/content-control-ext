@@ -57,6 +57,8 @@ export function parseResultsBlockEntry(res:BlockEntryImp[]): Array<BlockEntry>{
 
     for (var f = 0; f < res.length; f++){
 
+        console.log(`ParseRBE:${res[f].domainName} - SB:${res[f].shortBlock}`)
+
         blockEntryArray.push(new BlockEntry(
             res[f].domainName,
             res[f].blockedUntil,
@@ -65,7 +67,15 @@ export function parseResultsBlockEntry(res:BlockEntryImp[]): Array<BlockEntry>{
             res[f].dailyLimit,
             res[f].dailyLimitTime,
             res[f].lastAccess,
-            res[f].accessTime
+            res[f].accessTime,
+            res[f].shortBlock,
+            res[f].shortBlockAccessTime,
+            res[f].shortBlockLimit,
+            res[f].shortBlockDuration,
+            res[f].shortBlockedUntil,
+            res[f].doomScrollingProtection,
+            res[f].doomScrollingRate,
+            res[f].autoPlayBlocker
         ))
     }
 
@@ -111,7 +121,7 @@ export function verifyBlockType(bt:string): string{
         return '011'
     } else if (bt === 'delayAccess') {
         return '100'
-    } else if (bt === 'noDoom') {
+    } else if (bt === 'shortBlock') {
         return '101'
     } else if (bt === 'malicious') {
         return '110'

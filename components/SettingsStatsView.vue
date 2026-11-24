@@ -100,6 +100,14 @@ function rankUsage(){
         'count': 5,
     })
     
+    const usageTitles = [
+        'Hoje',
+        'Semana',
+        'Semana Ant.',
+        'Mês',
+        'Mês Ant.',
+        'Total'
+    ]
     rankedUsage.value.map((val, ind) =>{
         var toRemove: DomainUsageStats[] = [];
         var other: DomainUsageStats = {
@@ -108,7 +116,7 @@ function rankUsage(){
         }
 
         var usageTotal: DomainUsageStats = {
-            'domainName': `usage-${ind}`,
+            'domainName': usageTitles[ind],
             'count': 0
         }
 
@@ -172,9 +180,13 @@ function getMouseCoords(e:MouseEvent) {
                             }" 
                             :class="colorDict[colorHandling(statBlock)]"
                             v-on:mousemove="getMouseCoords"
+                            :hidden="index>5"
                             >
-                            <p>
+                            <p v-if="index!=5">
                                 {{ statBlock.domainName }}
+                            </p>
+                            <p v-else>
+                                Outros +
                             </p>
                             <div 
                                 :id="`${idx}-${statBlock.domainName}`" 
@@ -184,8 +196,11 @@ function getMouseCoords(e:MouseEvent) {
                                     top: `${mouseCoords[1]}px`
                                     }"
                                 :class="colorDict[colorHandling(statBlock)]">
-                                <p>
+                                <p v-if="index!=5">
                                     {{ statBlock.domainName }} => {{ formatHoursMinutes(statBlock.count) }}
+                                </p>
+                                <p v-else v-for="vle in rankedUsage[idx].filter((vl)=>{return vl.count <= rankedUsage[idx][5].count})" :class="colorDict[colorHandling(statBlock)]">
+                                    {{vle.domainName}} => {{ formatHoursMinutes(vle.count) }}
                                 </p>
                             </div>
                         </div>

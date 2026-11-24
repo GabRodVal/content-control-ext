@@ -10,7 +10,7 @@ const blockPurpDict: Record<string, string> = {
   '010':'Dentro do Intervalo de Bloqueio',
   '011':'Limite de Tempo atingido',
   '100':'Atraso de Acesso. Se isto está sendo visto, algo está errado',
-  '101':'Proteção Contra Ciclos Viciosos.',
+  '101':'Bloqueio Rápido',
   '110':'Uma das listas de filtragem utilizadas classifica o domínio como malicioso.',
   '111':'Outro',
   'NAN':'ERRO: Parâmetro inválido.',
