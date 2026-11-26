@@ -16,7 +16,7 @@ export default defineBackground(() => {
   const filterVersion: string = '0'
 
   //////////////////////////////////////////////////////
-  initBlockEntries.push(new BlockEntry('youtube.com'))
+  /*initBlockEntries.push(new BlockEntry('youtube.com'))
   initBlockEntries.push(new BlockEntry('instagram.com'))
   initBlockEntries[1].addAccessTime(1000 * 60 * 60 * 4)
   initBlockEntries.push(new BlockEntry('x.com'))
@@ -24,7 +24,7 @@ export default defineBackground(() => {
   initBlockEntries.push(new BlockEntry('chat.openai.com'))
   initBlockEntries.push(new BlockEntry('tiktok.com'))
   initBlockEntries[4].addAccessTime(1000 * 60 * 60 * 3)
-  initBlockEntries.push(new BlockEntry('reddit.com'))
+  initBlockEntries.push(new BlockEntry('reddit.com'))*/
   /////////////////////////////////////////////////////
 
   //Garantir q a lista não seja substituida ao atualizar a extensão ou o navegador.
