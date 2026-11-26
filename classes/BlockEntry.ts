@@ -225,22 +225,25 @@ export class BlockEntry {
         // change to get functions?
         //const msDay = 24 * 60 * 60 * 1000;
 
-        let oldAccessTime = this.accessTime
+        let oldAccessTime:BlockEntryAccessTime = this.accessTime
+        
         let currently = new Date();
+        let oldUpdate: Date = new Date(oldAccessTime.lastUpdate)
 
-        if (oldAccessTime.lastUpdate.getDate() != currently.getDate()) {
+
+        if (oldUpdate.getDate() != currently.getDate()) {
             oldAccessTime.today = 0
             this.shortBlockAccessTime = 0
             
-            if (Math.abs(currently.getDate() - oldAccessTime.lastUpdate.getDate()) >= 7 ||
-                oldAccessTime.lastUpdate.getDay() > currently.getDay()) {
+            if (Math.abs(currently.getDate() - oldUpdate.getDate()) >= 7 ||
+                oldUpdate.getDay() > currently.getDay()) {
                 oldAccessTime.lastWeek = oldAccessTime.curWeek;
                 oldAccessTime.curWeek = 0;
             }
         }
 
-        if (oldAccessTime.lastUpdate.getFullYear() == currently.getFullYear()){
-            if (oldAccessTime.lastUpdate.getMonth() == currently.getMonth()){
+        if (oldUpdate.getFullYear() == currently.getFullYear()){
+            if (oldUpdate.getMonth() == currently.getMonth()){
             } else {
                 oldAccessTime.today = 0
                 oldAccessTime.lastMonth = oldAccessTime.curMonth;

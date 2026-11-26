@@ -150,8 +150,8 @@ export default defineBackground(() => {
 
   browser.webNavigation.onCommitted.addListener(
     async (details) => {
-      console.log('Nav Committed')
-      console.log(details)
+      //console.log('Nav Committed')
+      //console.log(details)
       let navUrl = new URL(details.url)
       let oUrl: URL
 
@@ -219,6 +219,14 @@ export default defineBackground(() => {
     browser.tabs.onActivated,
   ]
 
+  function validateUrl(nUrl:string){
+    try {
+      let wUrl = new URL(nUrl)
+      return wUrl   
+    } catch (error) {
+      return null
+    }
+  }
   usageEvents.forEach(ev => {
     ev.addListener(async () => {
 
@@ -226,49 +234,55 @@ export default defineBackground(() => {
 
     if (tabs.length > 0) {
 
-      const tabUrl: string | undefined = tabs[0]?.url;
-      if (tabUrl!== undefined) {
+      if (tabs[0].url !== undefined){
+        const tabUrl: string = tabs[0].url;
+      
+        if (tabUrl !== undefined) {
 
-        var curDomain = new URL(tabUrl).hostname;
-        if(curDomain !== lastBlDomain){
-          if (usageBeholders.length > 0) {
-            usageBeholders = clearAllIntervals(usageBeholders)
-          }
+          var tabCmpUrl = validateUrl(tabUrl)
+          if (tabCmpUrl !== null){
+            var curDomain = tabCmpUrl.hostname;
+            if(curDomain !== lastBlDomain){
+              if (usageBeholders.length > 0) {
+                usageBeholders = clearAllIntervals(usageBeholders)
+              }
 
-          blockList.map((blockedDomain, index) => {
-            if (!statsRegEnabled){
-              return
-            }
-            let bDomainName = blockedDomain.getDomainName();
-
-
-            let theOne = Boolean(curDomain.indexOf(bDomainName) != -1);
-
-            if (theOne) {
-              usageBeholders = clearAllIntervals(usageBeholders)
-              var lastInterval = new Date();
-              usageBeholders.push(setInterval(() => {
-                var newInterval = new Date();
-                var timeAdded = newInterval.getTime() - lastInterval.getTime();
-                blockList[index].addAccessTime(timeAdded);
-
-                accumulatedTime += timeAdded;
-                console.log(`${bDomainName}: +2.5s! (${timeAdded})| ${blockList[index].getAccessTime().today} | sB ${blockList[index].getShortBlock().shortBlock}`)
-
-                if (accumulatedTime > 1000 * 60 * 1) {
-                  setBlockEntryList(blockList);
-
-                  accumulatedTime = 0;
+              blockList.map((blockedDomain, index) => {
+                if (!statsRegEnabled){
+                  return
                 }
-                lastInterval = newInterval;
-              }, 2500)
-              );
-            }
-          })
+                let bDomainName = blockedDomain.getDomainName();
 
-          lastBlDomain = curDomain;
+
+                let theOne = Boolean(curDomain.indexOf(bDomainName) != -1);
+
+                if (theOne) {
+                  usageBeholders = clearAllIntervals(usageBeholders)
+                  var lastInterval = new Date();
+                  usageBeholders.push(setInterval(() => {
+                    var newInterval = new Date();
+                    var timeAdded = newInterval.getTime() - lastInterval.getTime();
+                    blockList[index].addAccessTime(timeAdded);
+
+                    accumulatedTime += timeAdded;
+                    console.log(`${bDomainName}: +2.5s! (${timeAdded})| ${blockList[index].getAccessTime().today} | sB ${blockList[index].getShortBlock().shortBlock}`)
+
+                    if (accumulatedTime > 1000 * 60 * 1) {
+                      setBlockEntryList(blockList);
+
+                      accumulatedTime = 0;
+                    }
+                    lastInterval = newInterval;
+                  }, 2500)
+                  );
+                }
+              })
+
+              lastBlDomain = curDomain;
+            }
+          
         }
-        
+      }
       }
     }
   })})

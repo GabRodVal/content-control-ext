@@ -135,6 +135,7 @@ function removeBlockHoursInterval(blEntry: BlockEntry, intervalIndex: number){
 }
 
 async function updateWeekDays(blEntry:BlockEntry, bWeek:BlockWeekDays){
+    await nextTick()
     blEntry.setBlockWeekDays(bWeek);
     await updateBlockEntryList();
 }
