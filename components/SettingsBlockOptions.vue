@@ -283,7 +283,7 @@ const forceUpdate = async(ind:number) => {
                             <input type="checkbox" id="weekday-toggle" v-model="blockWeekDays.blockByWeekday" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)">
                             <label for="weekday-toggle">Aplicar em Dias da Semana?</label>
                             <!--<code>{{blockWeekDays}}</code>-->
-                            <div class="settings-option-box wkday-item" v-bind:hidden="!blockWeekDays.blockByWeekday || blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <div class="settings-option-box wkday-item" v-bind:style="{'display' : (blockWeekDays.blockByWeekday || blockEntryList[selectedBlockentry].isBlocked().isBlocked) ? 'flex' : 'none' }">
                                 <code class="wkday-item">
                                     <input type="checkbox" id="sun-block" v-model="blockWeekDays.wDays.sunBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
                                     <label for="sun-block"> &nbsp; - Domingo</label>
