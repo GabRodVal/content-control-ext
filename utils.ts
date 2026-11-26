@@ -57,7 +57,6 @@ export function parseResultsBlockEntry(res:BlockEntryImp[]): Array<BlockEntry>{
 
     for (var f = 0; f < res.length; f++){
 
-        console.log(`ParseRBE:${res[f].domainName} - SB:${res[f].shortBlock}`)
 
         blockEntryArray.push(new BlockEntry(
             res[f].domainName,

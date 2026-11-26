@@ -1,6 +1,7 @@
 import { BlockEntryAccessTime } from "@/interfaces/BlockEntryAccessTime";
 import { BlockObject } from "@/interfaces/BlockObject";
 import { BlockWeekDays } from "@/interfaces/BlockWeekDays";
+import { setBlockEntryList } from "@/storage_utils";
 
 export class BlockEntry {
     private domainName: string;
@@ -88,8 +89,6 @@ export class BlockEntry {
 
         this.autoPlayBlocker = autoPlayBlocker
 
-        console.log(`CONSTRUCTOR${shortBlock}`)
-        
     }
 
     public validateName(): Boolean{
@@ -178,7 +177,15 @@ export class BlockEntry {
     }
 
     public setBlockWeekDays(wkDays:BlockWeekDays){
-        this.blockWeekDays = wkDays
+        this.blockWeekDays.blockByWeekday = wkDays.blockByWeekday
+        
+        this.blockWeekDays.wDays.sunBlock = wkDays.wDays.sunBlock
+        this.blockWeekDays.wDays.monBlock = wkDays.wDays.monBlock
+        this.blockWeekDays.wDays.tueBlock = wkDays.wDays.tueBlock
+        this.blockWeekDays.wDays.wedBlock = wkDays.wDays.wedBlock
+        this.blockWeekDays.wDays.thuBlock = wkDays.wDays.thuBlock
+        this.blockWeekDays.wDays.friBlock = wkDays.wDays.friBlock
+        this.blockWeekDays.wDays.satBlock = wkDays.wDays.satBlock
     }
 
     public getDailyLimit(): Boolean{
@@ -296,7 +303,7 @@ export class BlockEntry {
                 } else if (currently.getDay() == 6 && bWkDays.wDays.satBlock == true) {
                     return { isBlocked: true, blockType: 'blockHour' }
                 } else {
-                    return { isBlocked: true, blockType: 'blockHour' }
+                    return { isBlocked: false, blockType: 'none' }
                 }
             } else {
                 return { isBlocked: true, blockType: 'blockHour' }
@@ -319,7 +326,6 @@ export class BlockEntry {
         }
     }
     public setShortBlock(toBlock:boolean){
-        console.log(`setShortBlock\nBEF:${this.shortBlock} | AFT:${toBlock}`)
         this.shortBlock = toBlock;
     }
     public setShortBlockDuration(bDur:number){
@@ -355,6 +361,7 @@ export class BlockEntry {
             let currently = new Date();
             if (!this.isShortBlocked()){
                 //Bloqueio mais curto por padrão
+                console.log('AutoPlay BLOCK')
                 this.shortBlockedUntil = new Date(currently.getTime() + (2 * 60 * 1000))
                 this.blockedUntil = this.shortBlockedUntil
             }

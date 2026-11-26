@@ -6,8 +6,69 @@ const isExtensionEnabled = ref(true)
 const isBlockingEnabled = ref(true)
 const isRegisteringEnabled = ref(true)
 const isCosmeticFilteringEnabled = ref(true)
-const isDoomScrollingProtectionEnabled = ref(true)
-const isOverrideEnabled = ref(true)
+
+
+const mounted = ref<boolean>(false)
+
+
+onBeforeMount(async () => {
+
+    const res = await new Promise <{
+        currentlyBlocking?: boolean,
+        filterEnabled?: boolean,
+        statsRegEnabled?: boolean,
+    }> ((resolve, reject) => {
+        try{
+            browser.storage.local.get([
+                'currentlyBlocking',
+                'filterEnabled',
+                'statsRegEnabled',
+            ]).then(resolve).catch(reject as any)
+        } catch (err) {
+            reject(err)
+        }
+    })
+
+
+    if (res.currentlyBlocking !== undefined){
+        isBlockingEnabled.value = res.currentlyBlocking
+    }
+    if (res.filterEnabled !== undefined){
+        isCosmeticFilteringEnabled.value = res.filterEnabled
+    }
+    if (res.statsRegEnabled !== undefined){
+        isRegisteringEnabled.value = res.statsRegEnabled
+    }else {
+        console.error('ERRO: currentlyBlocking retorna undefined')
+    }
+
+    await nextTick();
+
+    mounted.value = true
+});
+
+async function updateBlockOptions(){
+
+    if (mounted){
+        try{
+            browser.storage.local.set({
+                currentlyBlocking: isBlockingEnabled.value,
+                filterEnabled: isCosmeticFilteringEnabled.value,
+                statsRegEnabled: isRegisteringEnabled.value
+            }, ()=>{
+                console.log('general updt')
+            })
+        }catch (err){
+            console.error(err)
+        }
+       
+        await nextTick();
+
+
+    } else {
+        console.warn('SettingsGeneral: =>Not Updated...', `mounted:${mounted}`)
+    }
+}
 
 /*if (isExtensionEnabled){
 allcool
@@ -23,36 +84,26 @@ return all false
         <div class="settings-item">
             <p> Funcionalidades Básicas</p>
             <div>
-                <!--Conferir se 'hitbox' do check funciona corretamente-->
-                <input type="checkbox" id="extension-enabled" v-model="isExtensionEnabled"/>
-                <label for="extension-enabled"> Habilitar funcionamento da extensão? ({{ isExtensionEnabled }})</label>
-            </div>
-            <div>
                 <div>
-                    <input type="checkbox" id="blocking-enabled" :disabled="!isExtensionEnabled" v-model="isBlockingEnabled"/>
+                    <input type="checkbox" id="blocking-enabled" :disabled="!isExtensionEnabled" v-model="isBlockingEnabled" v-on:change="updateBlockOptions"/>
                     <label for="blocking-enabled"> Habilitar bloqueio de acesso a sites/domínios registrados? ({{ isBlockingEnabled }})</label>
                 </div>
 
                 <div>
-                    <input type="checkbox" id="stats-enabled" :disabled="!isExtensionEnabled" v-model="isRegisteringEnabled"/>
+                    <input type="checkbox" id="stats-enabled" :disabled="!isExtensionEnabled" v-model="isRegisteringEnabled" v-on:change="updateBlockOptions"/>
                     <label for="stats-enabled"> Habilitar registro do tempo de uso de sites/domínios registrados? ({{ isRegisteringEnabled }})</label>
                 </div>
 
                 <div>
-                    <input type="checkbox" id="comestic-filtering-enabled" :disabled="!isExtensionEnabled" v-model="isCosmeticFilteringEnabled"/>
+                    <input type="checkbox" id="comestic-filtering-enabled" :disabled="!isExtensionEnabled" v-model="isCosmeticFilteringEnabled" v-on:change="updateBlockOptions"/>
                     <label for="comestic-filtering-enabled"> Habilitar filtragem cosmética? ({{ isCosmeticFilteringEnabled }})</label>
                 </div>
 
-                <div>
-                    <input type="checkbox" id="doomscrolling-protection-enabled" :disabled="!isExtensionEnabled" v-model="isDoomScrollingProtectionEnabled"/>
-                    <label for="doomscrolling-protection-enabled"> Habilitar proteção contra práticas de incentivo a consumo abusivo (Doomscrolling, Auto-play)? ({{ isDoomScrollingProtectionEnabled }})</label>
-                </div>
-
                 <!--Desabilitar caso esteja bloqueando-->
-                <div>
+                <!--<div>
                     <input type="checkbox" id="override-enabled" :disabled="!isExtensionEnabled" v-model="isOverrideEnabled"/>
                     <label for="override-enabled"> Habilitar a sobreposição de bloqueio? ({{ isOverrideEnabled }})</label>
-                </div>
+                </div>-->
 
             </div>
         </div>

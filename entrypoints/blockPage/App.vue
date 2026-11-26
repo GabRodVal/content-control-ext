@@ -7,8 +7,8 @@ import { ref, onMounted } from 'vue';
 const blockPurpDict: Record<string, string> = {
   '000':'Nenhuma razão de bloqueio, algo está errado',
   '001':'Bloqueio Ativo',
-  '010':'Dentro do Intervalo de Bloqueio',
-  '011':'Limite de Tempo atingido',
+  '010':'Intervalo de Bloqueio',
+  '011':'Limite de Tempo Atingido',
   '100':'Atraso de Acesso. Se isto está sendo visto, algo está errado',
   '101':'Bloqueio Rápido',
   '110':'Uma das listas de filtragem utilizadas classifica o domínio como malicioso.',

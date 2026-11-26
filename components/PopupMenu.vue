@@ -3,20 +3,24 @@ import { ref,onBeforeMount } from 'vue';
 //import { BlockList } from '@/classes/BlockList';
 import { cleanDomainName, parseResultsBlockEntry } from '@/utils';
 import { BlockEntry } from '@/classes/BlockEntry';
+import { getBlockEntryList } from '@/storage_utils';
+
 
 const isPopAppMounted = ref(false)
 
 //const selectBlockList = ref<BlockList | null> (null);
 //const blockLists = ref<BlockList[]>([]);
 
-const blockEntryList = ref<BlockEntry[]>([])
+const blockEntryList = shallowRef<BlockEntry[]>([])
+const showDomain = ref(false)
 
-const curDomain = ref("");
+const curDomain = ref("---");
 //const listResults = ref("");
 
 
 onBeforeMount(async () => {
-  let blockEntries = await browser.storage.local.get(["blockList"])
+  /*let blockEntries = await browser.storage.local.get(["blockList"])
+  getBlockEntryList()
   .then((results) => {
     console.log('[]?',results)
       return parseResultsBlockEntry(results.blockList);
@@ -27,11 +31,11 @@ onBeforeMount(async () => {
 
   blockEntries.map((blEntry) =>{
     blockEntryList.value.push(blEntry);
-  })
-  
-  
-  browser.storage.local.onChanged.addListener(handleBlockColor)
+  })*/
 
+  blockEntryList.value = await getBlockEntryList()
+  
+  
   //await handleBlockColor();
 
   //confuso, remontar
@@ -41,7 +45,6 @@ onBeforeMount(async () => {
 
   } while (!isPopAppMounted.value)
 
-  handleBlockColor();
 });
 
 async function redirectSettings() {
@@ -69,72 +72,93 @@ async function getCurrentDomain(): Promise<string> {
 }
 
 async function logDomain(){
-  const domain = await getCurrentDomain();
-  curDomain.value = domain;
+  if(showDomain.value){
+    showDomain.value = false
+  } else {
+    const domain = await getCurrentDomain();
+    
+    curDomain.value = domain;
+    showDomain.value = true
+  }
 }
 
-async function toggleBlock(){
-
-  let block = await browser.storage.local.get(["currentlyBlocking"]);
-
-  /*const blockButton = document.getElementById("blocking-button");
-  //Aplicar classes no style.css | Adicionar Style.css padrão em 'content.ts' | aplicar
-  if (blockButton != null){
-    if (block.currentlyBlocking){
-      blockButton.style.backgroundColor = "#cf0000";
-    } else {
-      blockButton.style.backgroundColor = "limegreen";
-    }
-  }*/
-
-  browser.storage.local.set({currentlyBlocking: !block.currentlyBlocking}, () => {});
-}
-
-async function handleBlockColor(){
-  const block = await browser.storage.local.get(["currentlyBlocking"]);
-
-  const blockButton = document.getElementById("blocking-button");
-  if (blockButton != null){
-    if (!block.currentlyBlocking){
-      blockButton.style.backgroundColor = "#cf0000";
-    } else {
-      blockButton.style.backgroundColor = "limegreen";
+const isBlockedDomain = () =>{
+  for (let it in blockEntryList.value){
+    if (Boolean(curDomain.value.indexOf(blockEntryList.value[it].getDomainName()) != -1)){
+      return true
     }
   }
+  return false
 }
 </script>
 
+
+
 <template>
+
   <div class="card" v-if="isPopAppMounted">
-
-    <button id="blocking-button" type="button" @click="toggleBlock">BLOCK</button>
-
-    <div class="list-box">
-        <p>Sites Bloqueados:</p>
-        <div id="blocked-sites-box">
-          <code v-for="(site, index) in blockEntryList" :key="index" :value="site">
-            {{ site.getDomainName() }}
-          </code>
-      </div>
-  </div>
     
-    <!--<div>
-      <p>{{ listResults }}</p>
-    </div>-->
-    
+    <div class="title-box">
+      <img src="/wxt.svg" alt="OzoneBlock" id="card-logo">
+      <p id="card-title">OzoneBlock</p>
 
-    <div class="domain-box">
-      <button class="menu-button" type="button" @click="logDomain"> Mostrar domínio atual</button>
-      <code id="domain-code" v-if="curDomain !== ''">{{curDomain}}</code>
     </div>
 
-    <button id="config-button" type="button" @click="redirectSettings()"> Config</button>
+    
+    <div class="domain-box">
+      <div class="domain-box">
+        <button class="menu-button" type="button" @click="logDomain" v-if="!showDomain">
+           Mostrar domínio atual
+           <i>&#x25C1;</i>
+        </button>
+        <button class="menu-button" type="button" @click="logDomain" v-else>
+           Mostrar domínio atual
+           <i>&#x25BD;</i>
+        </button>
+        <div class="code-box" :hidden="!showDomain">
+          <code id="domain-code" >
+            {{curDomain}}
+          </code>
+            <button id="add-domain-button" :disabled="isBlockedDomain()">
+              <i v-if="!isBlockedDomain()">&#x1F7A7;</i>
+              <i v-else>&#x00D8;</i>
+              ADD
+            </button>
+        </div>
+        <p v-if="isBlockedDomain()">*Este domínio já está registrado</p>
+      </div>
+
+      <div class="domain-box">
+        <button id="config-button" type="button" @click="redirectSettings()"> Config</button>
+      </div>
+    </div>
+
+    
   </div>
 </template>
 
 <!-- Passar para dentro do style.css-->
 
 <style scoped>
+
+
+.card{
+  background-color: oklch(37.2% 0.044 257.287);
+  color:whitesmoke;
+}
+
+.title-box{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  vertical-align: center;
+  font-size: 2rem;
+  padding: 0.8rem;
+  border-radius: 0.2rem;
+  border: solid  rgba(245, 245, 245, 0.6) 2px ;
+}
+
 .list-box{
   display: flex;
   flex-direction: column;
@@ -143,31 +167,96 @@ async function handleBlockColor(){
 .domain-box{
   display: flex;
   flex-direction: column;
-  background-color: lightgrey;
+  padding: 0.8rem;
+  border-radius: 0.2rem;
+  border: solid  rgba(245, 245, 245, 0.6) 2px ;
+}
+
+.code-box{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  vertical-align: center;
+  width: 100%;
   border-radius: 0.4rem;
+  border: solid  rgba(245, 245, 245, 0.6) 2px ;
 }
 
-.menu-button{
-  color:whitesmoke;
-  background-color: limegreen;
+  code {
+    background-color: #1a1a1a8e;
+    transition: 160ms;
+    border-radius: 0.2em;
+  }
 
-}
+code:hover {
+    background-color: #1a1a1a;
+  }
 
-#config-button{
+ button {
   color: whitesmoke;
-  background-color: teal;
-  margin: 0.2em
-}
+  background-color: oklch(55.4% 0.046 257.417);
+  border-radius: 0.1rem;
+  border-color: whitesmoke;
+  border-width: 0.1rem;
+  padding: 0.1rem;
+ }
 
-#blocking-button{
-  color: whitesmoke;
-}
+ button:hover{
+  color: oklch(55.4% 0.046 257.417);
+  background-color: whitesmoke;
+  border-radius: 0.1rem;
+  border-color: oklch(55.4% 0.046 257.417);
+  border-width: 0.1rem;
+ }
+ 
+ button:disabled{
+  background-color: #cccccccc;
+  color: #8a8a8a;
+  border-radius: 0.1rem;
+  border-color: oklch(55.4% 0.046 257.417);
+  border-width: 0.1rem;
+  
+ }
+ i{
+  margin-right: 0.2rem;
+  margin-left: 0.2rem;
+ }
+
+ .menu-button{
+  padding-left: 0.24rem;
+  padding-right: 0.24rem;
+ }
+
+ #add-domain-button{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: center;
+  padding: 0.16rem;
+  padding-left: 0.24rem;
+  padding-right: 0.24rem;
+  border-top-right-radius: 0.2rem;
+  border-bottom-right-radius: 0.2rem;
+ }
+
+ #blocking-button{
+  height: 2rem;
+  width: 2rem;
+  border-radius: 0.2rem;
+  border-color: rgba(127,127,127,0.6);
+ }
 
 #domain-code{
   position: relative;
-  height: 2rem;
+  width: 100%;
   font-size: 1rem;
-  margin-top: auto;
+  padding:0.16rem;
+  margin: 0px;
+  padding-left: auto;
+  padding-right: auto;
+  border-top-left-radius: 0.2rem;
+  border-bottom-left-radius: 0.2rem;
 }
 
 #blocked-sites-box{
@@ -175,5 +264,22 @@ async function handleBlockColor(){
   flex-direction: column;
   background-color: lightgrey;
   border-radius: 0.4rem;
+}
+
+#card-logo{
+  height: 2.4rem;
+  width: 2.4rem;
+  margin-right: 0.6rem;
+}
+
+#config-button{
+  padding: auto;
+  margin: 0.2rem;
+}
+
+#card-title{
+  padding: 0px;
+  margin: 0px;
+  font-size: 2.1rem;
 }
 </style>

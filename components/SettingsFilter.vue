@@ -36,8 +36,8 @@ onBeforeMount(async () => {
 <template>
     <div class="settings-content">
         <p> Filtros Registrados</p>
-        <input id="enable-filter" type="checkbox" disabled checked>
-        <label for="enable-filter">Habilitar filtragem cosmética?</label>
+        <!--<input id="enable-filter" type="checkbox" disabled checked>
+        <label for="enable-filter">Habilitar filtragem cosmética?</label>-->
         <div class="settings-item filter-container">
             <code class="filter-list" v-for="flt in filterList">
                 {{flt}}

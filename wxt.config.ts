@@ -12,6 +12,7 @@ export default defineConfig({
       "windows",
       "webRequest",
       "webRequestBlocking",
+      "webNavigation",
       "<all_urls>",
       "http://*/",
       "https://*/"

@@ -28,7 +28,8 @@ export default defineBackground(() => {
   /////////////////////////////////////////////////////
 
   //Garantir q a lista não seja substituida ao atualizar a extensão ou o navegador.
-  let currentlyBlocking = true;
+  var currentlyBlocking = true;
+  var statsRegEnabled = true;
   //let blockLists = [createBlockList("Lista Padrao", ["youtube.com", "x.com", "tiktok.com"])];
 
   //Ao instalar
@@ -36,6 +37,7 @@ export default defineBackground(() => {
     browser.storage.local.set({
       currentlyBlocking: currentlyBlocking,
       filterEnabled: true,
+      statsRegEnabled: true,
       //filterList: filterList,
       //filterVersion: filterVersion,
       //blockLists: blockLists,
@@ -63,10 +65,12 @@ export default defineBackground(() => {
       "currentlyBlocking",
       //"blockLists",
       "blockList",
+      "statsRegEnabled"
     ], (result) => {
       currentlyBlocking = result.currentlyBlocking;
       //blockLists = result.blockLists;
       blockList = parseResultsBlockEntry(result.blockList);
+      statsRegEnabled = result.statsRegEnabled;
 
       console.log('Get #1a: OK =>', blockList, typeof (blockList[0]))
     });
@@ -75,6 +79,9 @@ export default defineBackground(() => {
   //Sem condicional, atualiza tempo de acesso
   setInterval(() => {
     for (var f = 0; f < blockList.length; f++){
+      if (!statsRegEnabled) {
+        break
+      }
       blockList[f].updateAccessTime();
     }
     console.log(blockList)
@@ -98,11 +105,11 @@ export default defineBackground(() => {
   //Block logic
   //Currently blocks anything in the blocklist
   browser.webRequest.onBeforeRequest.addListener(
-    //(details) => {
     (details) => {
       if(!currentlyBlocking){
         return {cancel: false};
       }
+      
 
       let cancel = blockList.some((blockedDomain:BlockEntry) => {
 
@@ -122,7 +129,6 @@ export default defineBackground(() => {
             console.log('DETAILS')
             console.log(details)
             setTimeout(()=>{},500)
-            //let curTab = browser.tabs.get(details.tabId)
             let blUrl = new URL(browser.runtime.getURL('/blockPage.html'))
             blUrl.search = `?ogdom=${curDomain.hostname}&bltype=${blockType}`
             browser.tabs.update(details.tabId, {url: blUrl.href})
@@ -137,9 +143,50 @@ export default defineBackground(() => {
       urls: ["<all_urls>"]
     },
     [
-      "blocking"
+      "blocking",
+      "requestBody"
     ]
   );
+
+  browser.webNavigation.onCommitted.addListener(
+    async (details) => {
+      console.log('Nav Committed')
+      console.log(details)
+      let navUrl = new URL(details.url)
+      let oUrl: URL
+
+
+      if (
+        details.transitionType == 'auto_subframe' ||
+        details.transitionQualifiers.includes('client_redirect')
+      ) {
+
+        browser.tabs.get(details.tabId, async (res) => {
+          let tUrl = res.url
+          if (tUrl != undefined) {
+            oUrl = new URL(tUrl)
+
+
+            blockList.some((blockedDomain: BlockEntry) => {
+
+              let bDomainName = blockedDomain.getDomainName();
+
+              let theOne = Boolean(oUrl.hostname.indexOf(bDomainName) != -1);
+
+              if (theOne) {
+                blockedDomain.blockByAutoplay()
+              }
+            }
+            ) 
+          }
+        })
+
+        }
+  }
+  )
+
+  //////////////////////////////////////////////////////////window.
+  
 
   //Mudar para storage.local
   browser.storage.onChanged.addListener((changes, namespace) =>{
@@ -147,9 +194,7 @@ export default defineBackground(() => {
       if(changes.currentlyBlocking) {
         currentlyBlocking = changes.currentlyBlocking.newValue;
       }
-      //if(changes.blockLists){
-      //  blockLists = changes.blockLists.newValue;
-      //}
+ 
       if(changes.blockList){
         blockList = parseResultsBlockEntry(changes.blockList.newValue);
       }
@@ -167,6 +212,7 @@ export default defineBackground(() => {
   var usageBeholders:NodeJS.Timeout[] = []
   var accumulatedTime: number = 0
   var lastBlDomain = '';
+  
   const usageEvents = [
     browser.windows.onFocusChanged,
     browser.tabs.onUpdated,
@@ -190,11 +236,13 @@ export default defineBackground(() => {
           }
 
           blockList.map((blockedDomain, index) => {
+            if (!statsRegEnabled){
+              return
+            }
             let bDomainName = blockedDomain.getDomainName();
 
 
             let theOne = Boolean(curDomain.indexOf(bDomainName) != -1);
-            //console.log('the one:', bDomainName, theOne)
 
             if (theOne) {
               usageBeholders = clearAllIntervals(usageBeholders)
@@ -202,19 +250,15 @@ export default defineBackground(() => {
               usageBeholders.push(setInterval(() => {
                 var newInterval = new Date();
                 var timeAdded = newInterval.getTime() - lastInterval.getTime();
-                console.log(`BEF:${blockList[index].getShortBlock().shortBlock}`)
                 blockList[index].addAccessTime(timeAdded);
-                console.log(`AFT:${blockList[index].getShortBlock().shortBlock}`)
 
                 accumulatedTime += timeAdded;
                 console.log(`${bDomainName}: +2.5s! (${timeAdded})| ${blockList[index].getAccessTime().today} | sB ${blockList[index].getShortBlock().shortBlock}`)
 
                 if (accumulatedTime > 1000 * 60 * 1) {
                   setBlockEntryList(blockList);
-                  console.log(blockList)
 
                   accumulatedTime = 0;
-                  console.log('Time accumulated')
                 }
                 lastInterval = newInterval;
               }, 2500)
