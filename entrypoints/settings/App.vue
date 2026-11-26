@@ -115,9 +115,12 @@ function setSettingsState(st: settingsSections){
     width: 100%;
     max-width: 72vw;
     height: 100%;
+    max-height: 96vh;
+    overflow-y: auto;
     margin:1em;
+    margin-top: 2px;
     padding: 1.2em;
-    border-radius: 0.8em;
+    border-radius: 0.64em;
     background-color: oklch(37.2% 0.044 257.287);
     }
 

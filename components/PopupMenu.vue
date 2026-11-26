@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { ref,onBeforeMount } from 'vue';
 //import { BlockList } from '@/classes/BlockList';
-import { cleanDomainName, parseResultsBlockEntry } from '@/utils';
+import { cleanDomainName, formatHoursMinutes, parseResultsBlockEntry } from '@/utils';
 import { BlockEntry } from '@/classes/BlockEntry';
-import { getBlockEntryList } from '@/storage_utils';
+import { getBlockEntryList, setBlockEntryList } from '@/storage_utils';
 
 
 const isPopAppMounted = ref(false)
@@ -12,38 +12,28 @@ const isPopAppMounted = ref(false)
 //const blockLists = ref<BlockList[]>([]);
 
 const blockEntryList = shallowRef<BlockEntry[]>([])
+const blockId = ref(-1)
 const showDomain = ref(false)
 
 const curDomain = ref("---");
+const addThrough = ref(false)
 //const listResults = ref("");
 
 
 onBeforeMount(async () => {
-  /*let blockEntries = await browser.storage.local.get(["blockList"])
-  getBlockEntryList()
-  .then((results) => {
-    console.log('[]?',results)
-      return parseResultsBlockEntry(results.blockList);
-  }).catch((err) =>{
-    console.error('ERROR - PopupMenu.vue:',err)
-    return []
-  })
-
-  blockEntries.map((blEntry) =>{
-    blockEntryList.value.push(blEntry);
-  })*/
 
   blockEntryList.value = await getBlockEntryList()
-  
   
   //await handleBlockColor();
 
   //confuso, remontar
   do {
       await nextTick()
+
       isPopAppMounted.value = (blockEntryList.value !== null)
 
   } while (!isPopAppMounted.value)
+
 
 });
 
@@ -51,6 +41,27 @@ async function redirectSettings() {
   const url = browser.runtime.getURL('/settings.html');
   await browser.tabs.create({ url });
 }
+
+async function addBlockEntryToList(domName:string){
+    var newEntry = new BlockEntry(domName)
+    blockEntryList.value.push(newEntry)
+
+    if (isPopAppMounted){
+        setBlockEntryList(blockEntryList.value)
+
+        await nextTick();
+        let blPromise:Array<BlockEntry> =  await getBlockEntryList()
+        await nextTick();
+
+        blockEntryList.value = blPromise
+
+        console.log('PopUp: BlockEntryList => Updated!')
+        addThrough.value = true
+    } else {
+        console.warn('PopUp: BlockEntryList =>Not Updated...')
+    }
+}
+
 
 async function getCurrentDomain(): Promise<string> {
   try {
@@ -71,23 +82,22 @@ async function getCurrentDomain(): Promise<string> {
   }
 }
 
-async function logDomain(){
-  if(showDomain.value){
-    showDomain.value = false
-  } else {
-    const domain = await getCurrentDomain();
-    
-    curDomain.value = domain;
-    showDomain.value = true
-  }
+
+const handleToggleShowDomain = async() =>{
+  showDomain.value = !showDomain.value
+  curDomain.value = await getCurrentDomain();
 }
 
 const isBlockedDomain = () =>{
-  for (let it in blockEntryList.value){
+
+  for (let it = 0; it < blockEntryList.value.length; it++){
     if (Boolean(curDomain.value.indexOf(blockEntryList.value[it].getDomainName()) != -1)){
+      blockId.value = it
       return true
+
     }
   }
+
   return false
 }
 </script>
@@ -107,29 +117,72 @@ const isBlockedDomain = () =>{
     
     <div class="domain-box">
       <div class="domain-box">
-        <button class="menu-button" type="button" @click="logDomain" v-if="!showDomain">
+        <button class="menu-button" type="button" @click="handleToggleShowDomain" v-if="!showDomain">
            Mostrar domínio atual
            <i>&#x25C1;</i>
         </button>
-        <button class="menu-button" type="button" @click="logDomain" v-else>
+        <button class="menu-button" type="button" @click="handleToggleShowDomain" v-else>
            Mostrar domínio atual
            <i>&#x25BD;</i>
         </button>
-        <div class="code-box" :hidden="!showDomain">
-          <code id="domain-code" >
+        
+        <div class="code-box" v-if="showDomain" >
+          <code id="domain-code">
             {{curDomain}}
           </code>
-            <button id="add-domain-button" :disabled="isBlockedDomain()">
+            <button id="add-domain-button" :disabled="isBlockedDomain() || addThrough" v-on:click="addBlockEntryToList(curDomain)">
               <i v-if="!isBlockedDomain()">&#x1F7A7;</i>
               <i v-else>&#x00D8;</i>
               ADD
             </button>
         </div>
-        <p v-if="isBlockedDomain()">*Este domínio já está registrado</p>
       </div>
 
       <div class="domain-box">
-        <button id="config-button" type="button" @click="redirectSettings()"> Config</button>
+        <div>
+          <p class="domain-info">Domínio Registrado: {{blockId!=-1 ? 'Verdadeiro' : 'Falso'}}</p>
+            <div v-if="isBlockedDomain()" class="domain-box">
+            <p class="domain-info">Limite Diário:
+              <code v-if="blockEntryList[blockId].getDailyLimit()">{{formatHoursMinutes(blockEntryList[blockId].getAccessTime().today)}}/{{formatHoursMinutes(blockEntryList[blockId].getDailyLimitTime())}}</code>
+              <code v-else>N/A</code>
+            </p>
+
+            <p class="domain-info">Dias de Bloqueio:</p>
+            <code v-if="!blockEntryList[blockId].getBlockWeekDays().blockByWeekday">
+              N/A
+            </code>
+            <div v-else class="info-box">
+              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.sunBlock">Domingo</code>
+              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.monBlock">Segunda-feira</code>
+              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.tueBlock">
+                Terça-feira</code>
+              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.wedBlock">
+                Quarta-feira</code>
+              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.thuBlock">
+                Quinta-feira</code>
+              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.friBlock">
+                Sexta-feira</code>
+              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.satBlock">
+                Sábado</code>
+
+            </div>
+
+            <p class="domain-info">Horários de Bloqueio:</p>
+            <code v-if="blockEntryList[blockId].getBlockHours().length<1">
+              N/A
+            </code>
+            <div v-else class="info-box">
+              <code class="wk-code" v-for="blHour in blockEntryList[blockId].getBlockHours()">
+                {{blHour}}
+              </code>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+
+      <div class="domain-box">
+        <button id="config-button" type="button" @click="redirectSettings()">⚙ Configurações</button>
       </div>
     </div>
 
@@ -154,7 +207,9 @@ const isBlockedDomain = () =>{
   justify-content: center;
   vertical-align: center;
   font-size: 2rem;
-  padding: 0.8rem;
+  padding: 0.64rem;
+  padding-top: 0.24rem;
+  padding-bottom: 0.24rem;
   border-radius: 0.2rem;
   border: solid  rgba(245, 245, 245, 0.6) 2px ;
 }
@@ -167,9 +222,38 @@ const isBlockedDomain = () =>{
 .domain-box{
   display: flex;
   flex-direction: column;
-  padding: 0.8rem;
-  border-radius: 0.2rem;
+  padding: 0.44rem;
+  margin-bottom: 0.24rem;
+  margin-top: 0.24rem;
+  border-radius: 0.24rem;
+  border: solid  rgba(245, 245, 245, 0.6) 2px;
+}
+
+.info-box{
+  display:flex;
+  flex-wrap: wrap;
+  max-width: 280px;
+  align-items: center;
+  justify-content: center;
+  vertical-align: center;
+  padding: 0.36rem;
+  border-radius: 0.4rem;
   border: solid  rgba(245, 245, 245, 0.6) 2px ;
+}
+
+.domain-info{
+  padding: 0.2rem;
+  margin: 0.2rem;
+  font-size: 0.88rem;
+}
+
+.wk-code{
+  border-radius: 0.4rem;
+  margin: 0.16rem;
+  margin-left: 0.24rem;
+  margin-right: 0.24rem;
+  padding: 0.24rem;
+  font-size: 0.64rem;
 }
 
 .code-box{

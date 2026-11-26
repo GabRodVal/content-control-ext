@@ -52,20 +52,26 @@ function findRepetition(domName:string){
 }
 
 const handleDomainName = (domName:string) =>{
+    if (domName === '') {
+        return false
+    }
+    
     let rep = findRepetition(domName)
 
     let domField = document.getElementById('domainField')
 
+    
+
     if (!regDom.test(domName) || rep){
         if (domField != null){
-            domField.style.color = '#DD4433'
+            domField.style.color = '#DD8866'
             domField.style.border = 'solid #DD4433 2px'
             return true
         }
     } else {
         if (domField != null){
-            domField.style.color = 'black'
-            domField.style.border = ''
+            domField.style.color = 'whitesmoke'
+            domField.style.border = 'solid whitesmoke 2px'
             return false
         }
     }
@@ -150,28 +156,32 @@ onBeforeMount(async () => {
                             <!--<td class="domain-table-cell"> {{`${(domain.getAccessTime().total)}|${formatHoursMinutes(domain.getAccessTime().total)}`}} </td>-->
                             <td class="domain-table-cell"> {{`${formatHoursMinutes(domain.getAccessTime().today)}`}} </td>
                             <td class="domain-table-cell"> {{`${formatHoursMinutes(domain.getAccessTime().total)}`}} </td>
-                            <td class="domain-table-cell"> <button :disabled="domain.isBlocked().isBlocked" v-on:click="removeBlockEntry(idx)">REMOVER</button> </td>
+                            <td class="domain-table-cell"> <button class="rmvlist-button" :disabled="domain.isBlocked().isBlocked" v-on:click="removeBlockEntry(idx)">REMOVER</button> </td>
                         </tr>
                         <!--{{/renderBlockList(blockLists[0])}}-->
                     </tbody>
                 </table>
             </div>
             <div class="domain-table-operators">
-                <div>
+                <div class="addlist-box">
                     <input type="text" id="domainField" placeholder="novo.site" v-model="domainToAdd" v-on:input="handleDomainName(domainToAdd)">
-                    <button v-on:click="addBlockEntryToList(domainToAdd)" :disabled="handleDomainName(domainToAdd)"> Adicionar </button>
+                    <button class="addlist-button" id="addlist-domain-button" v-on:click="addBlockEntryToList(domainToAdd)" :disabled="handleDomainName(domainToAdd)"> Adicionar </button>
                 </div>
             </div>
         </div>
         
         <div class="settings-item">
             <p>Recomendações de Bloqueio</p>
-            <code v-for="vbr in blockRecs" :hidden="findRepetition(vbr)">
-                {{vbr}}
-                <button v-on:click="addBlockEntryToList(vbr)">
-                    Adicionar
-                </button>
-            </code>
+            <div class="rec-box">
+                <span v-for="vbr in blockRecs">
+                    <code class="addlist-code" :style="{ 'display': findRepetition(vbr) ? 'none' : 'flex'}">
+                        {{vbr}}
+                        <button class="addlist-button" v-on:click="addBlockEntryToList(vbr)">
+                            Adicionar
+                        </button>
+                    </code>
+                </span>
+            </div>
         </div>
     </div>
 </template>
