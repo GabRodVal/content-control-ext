@@ -15,11 +15,13 @@ Execute no diretório da extensão:
 #### Instalação - Firefox
 
 > npm i
+>
 > npm run dev:firefox
 
 #### Instalação - Chrome
 
 > npm i
+>
 > npm run dev:chrome
 
 npm i
