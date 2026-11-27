@@ -6,7 +6,7 @@ Extensão desenvolvida como parte do TCC *Extensão de controle de conteúdo par
 
 ### Instalação
 
-É possível baixar o .zip com a versão de desenvolvimento [aqui]aqui.
+É possível baixar o .zip com a versão de desenvolvimento [aqui](https://github.com/GabRodVal/content-control-ext/releases).
 
 ---
 
@@ -23,6 +23,3 @@ Execute no diretório da extensão:
 > npm i
 >
 > npm run dev:chrome
-
-npm i
-npm run zip:firefox
