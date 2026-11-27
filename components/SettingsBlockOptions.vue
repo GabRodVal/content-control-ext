@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { nextTick, ref, onBeforeMount, shallowRef, vModelCheckbox } from 'vue';
 import { BlockEntry } from '@/classes/BlockEntry';
-import { BlockEntryImp } from '@/interfaces/BlockEntryImp';
-import { BlockWeekDays } from '@/interfaces/BlockWeekDays';
+import type { BlockEntryImp } from '@/interfaces/BlockEntryImp';
+import type { BlockWeekDays } from '@/interfaces/BlockWeekDays';
 import { parseResultsBlockEntry, formatHoursMinutes } from '@/utils';
 import { getBlockEntryList, setBlockEntryList } from '@/storage_utils';
 
@@ -51,6 +51,7 @@ const shortBlockDuration = ref(5 * 60 * 1000)
 onBeforeMount(async () => {
 
     blockEntryList.value = await getBlockEntryList();
+    
 
     await nextTick();
 
@@ -130,7 +131,9 @@ async function addBlockHoursInterval(blEntry: BlockEntry, blHr1:number, blMn1:nu
 
 function removeBlockHoursInterval(blEntry: BlockEntry, intervalIndex: number){
     const allIntervals = blEntry.getBlockHours()
-    blEntry.removeBlockHours(allIntervals[intervalIndex])
+    if (allIntervals && allIntervals[intervalIndex]){
+        blEntry.removeBlockHours(allIntervals[intervalIndex])
+    }
     updateBlockEntryList()
 }
 
@@ -176,18 +179,20 @@ const fRender = ref(true)
 const forceUpdate = async(ind:number) => {
 
     await nextTick()
-    blockWeekDays.value = blockEntryList.value[selectedBlockentry.value].getBlockWeekDays()
+    let blEntry = blockEntryList.value[selectedBlockentry.value]
+    if (blEntry){
+        blockWeekDays.value = blEntry.getBlockWeekDays()
 
-    openShortBlock.value = blockEntryList.value[selectedBlockentry.value].getShortBlock().shortBlock
-    openBlockHours.value = blockEntryList.value[selectedBlockentry.value].getBlockHours().length > 0
+        openShortBlock.value = blEntry.getShortBlock().shortBlock
+        openBlockHours.value = blEntry.getBlockHours().length > 0
 
-    shortBlockDuration.value = blockEntryList.value[selectedBlockentry.value].getShortBlock().shortBlockDur
-    shortBlockLimit.value = blockEntryList.value[selectedBlockentry.value].getShortBlock().shortBlockLimit
+        shortBlockDuration.value = blEntry.getShortBlock().shortBlockDur
+        shortBlockLimit.value = blEntry.getShortBlock().shortBlockLimit
 
-    autoplayBlockEnabled.value = blockEntryList.value[selectedBlockentry.value].getAutoplayBlockEnabled()
-    doomscrollingBlockEnabled.value = blockEntryList.value[selectedBlockentry.value].getDoomscrollingBlockEnabled()
-    doomscrollingBlockRate.value = blockEntryList.value[selectedBlockentry.value].getDoomscrollingRate()
-
+        autoplayBlockEnabled.value = blEntry.getAutoplayBlockEnabled()
+        doomscrollingBlockEnabled.value = blEntry.getDoomscrollingBlockEnabled()
+        doomscrollingBlockRate.value = blEntry.getDoomscrollingRate()
+    }
     await nextTick()
 
 }
@@ -218,13 +223,13 @@ const forceUpdate = async(ind:number) => {
             <div v-if="(selectedBlockentry != -1)">
                 <div class="settings-option-box">
                     <p class="option-title">Estado</p>
-                    <code>Bloqueado: {{ blockEntryList[selectedBlockentry].isBlocked().isBlocked ? 'BLOQUEADO':'LIVRE' }}</code>
+                    <code>Bloqueado: {{ blockEntryList[selectedBlockentry]?.isBlocked().isBlocked ? 'BLOQUEADO':'LIVRE' }}</code>
                 </div>
 
                 <div class="settings-option-box">
                     <p class="option-title">Bloqueio ativo até</p>
-                    <code v-if="blockEntryList[selectedBlockentry].getBlockedUntil() < (new Date())"> --- </code>
-                    <code v-else>{{ blockEntryList[selectedBlockentry].getBlockedUntil() }}</code>
+                    <code v-if="(blockEntryList[selectedBlockentry]?.getBlockedUntil() ?? new Date(0)) < new Date()"> --- </code>
+                    <code v-else>{{ blockEntryList[selectedBlockentry]?.getBlockedUntil() }}</code>
 
                     <div>
                         <input type="checkbox" v-model="openBlockUntil" name="bloqueio-ativo">
@@ -232,11 +237,11 @@ const forceUpdate = async(ind:number) => {
                     </div>
                         <div v-if="openBlockUntil">
                             <!--Adicionar Leading Zeros-->
-                            <input type="number" class="option-numberinput" v-model.number="blockUntilHours" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <input type="number" class="option-numberinput" v-model.number="blockUntilHours" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked">
                             <span>:</span>
-                            <input type="number" class="option-numberinput" v-model.number="blockUntilMinutes" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <input type="number" class="option-numberinput" v-model.number="blockUntilMinutes" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked">
                             
-                            <button class="settings-options-button" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked" v-on:click="addBlockUntil(blockEntryList[selectedBlockentry], blockUntilHours, blockUntilMinutes)">
+                            <button class="settings-options-button" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked" v-on:click="addBlockUntil(blockEntryList[selectedBlockentry]!, blockUntilHours, blockUntilMinutes)">
                                 Ativar Bloqueio
                             </button>
                         </div>
@@ -246,13 +251,13 @@ const forceUpdate = async(ind:number) => {
                 <div class="settings-option-box">
                     <p class="option-title">Horários de bloqueio</p>
                     <div class="hourblock-box">
-                        <code v-if="(blockEntryList[selectedBlockentry].getBlockHours().length < 1)">
+                        <code v-if="((blockEntryList[selectedBlockentry]?.getBlockHours().length ?? 0) < 1)">
                             N/A
                         </code>
                         <div v-else>
-                            <code class="option-hourblock" v-for="(blcHour, index) in blockEntryList[selectedBlockentry].getBlockHours()">
+                            <code class="option-hourblock" v-for="(blcHour, index) in blockEntryList[selectedBlockentry]?.getBlockHours()">
                                 {{ `${blcHour[0]} - ${blcHour[1]}` }}
-                                <button class="addlist-button" v-on:click="removeBlockHoursInterval(blockEntryList[selectedBlockentry], index)">
+                                <button class="addlist-button" v-on:click="removeBlockHoursInterval(blockEntryList[selectedBlockentry]!, index)">
                                     x
                                 </button>
                             </code>
@@ -266,14 +271,14 @@ const forceUpdate = async(ind:number) => {
                     <div v-if="openBlockHours">
                         <!--Adicionar Leading Zeros-->
                         <p>De</p>
-                        <input type="number" class="option-numberinput" v-model.number="blockIntervalHours1" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" class="option-numberinput" v-model.number="blockIntervalHours1" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked">
                         <span>:</span>
-                        <input type="number" class="option-numberinput" v-model.number="blockIntervalMinutes1" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" class="option-numberinput" v-model.number="blockIntervalMinutes1" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked">
                         <p>---</p>
                         <p>Até</p>
-                        <input type="number" class="option-numberinput" v-model.number="blockIntervalHours2" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" class="option-numberinput" v-model.number="blockIntervalHours2" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked">
                         <span>:</span>
-                        <input type="number" class="option-numberinput" v-model.number="blockIntervalMinutes2" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                        <input type="number" class="option-numberinput" v-model.number="blockIntervalMinutes2" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked">
 
                         <p v-if="blockIntervalInconsistency">
                             *O começo do intervalo deve ser menor que o seu fim
@@ -281,46 +286,46 @@ const forceUpdate = async(ind:number) => {
                         
 
                         <div>
-                            <input type="checkbox" id="weekday-toggle" v-model="blockWeekDays.blockByWeekday" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)">
+                            <input type="checkbox" id="weekday-toggle" v-model="blockWeekDays.blockByWeekday" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry]!, blockWeekDays)">
                             <label for="weekday-toggle">Aplicar em Dias da Semana?</label>
                             <!--<code>{{blockWeekDays}}</code>-->
-                            <div class="settings-option-box wkday-item" v-bind:style="{'display' : (blockWeekDays.blockByWeekday || blockEntryList[selectedBlockentry].isBlocked().isBlocked) ? 'flex' : 'none' }">
+                            <div class="settings-option-box wkday-item" v-bind:style="{'display' : (blockWeekDays.blockByWeekday || blockEntryList[selectedBlockentry]?.isBlocked().isBlocked) ? 'flex' : 'none' }">
                                 <code class="wkday-item">
-                                    <input type="checkbox" id="sun-block" v-model="blockWeekDays.wDays.sunBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                                    <input type="checkbox" id="sun-block" v-model="blockWeekDays.wDays.sunBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry]!, blockWeekDays)"/>
                                     <label for="sun-block"> &nbsp; - Domingo</label>
                                 </code>
                                 <code class="wkday-item">
-                                    <input type="checkbox" id="mon-block" v-model="blockWeekDays.wDays.monBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                                    <input type="checkbox" id="mon-block" v-model="blockWeekDays.wDays.monBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry]!, blockWeekDays)"/>
                                     <label for="mon-block"> &nbsp; - Segunda-feira</label>
                                 </code>
                                 <code class="wkday-item">
-                                    <input type="checkbox" id="tue-block" v-model="blockWeekDays.wDays.tueBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                                    <input type="checkbox" id="tue-block" v-model="blockWeekDays.wDays.tueBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry]!, blockWeekDays)"/>
                                     <label for="tue-block"> &nbsp; - Terça-feira</label>
                                 </code>
                                 <code class="wkday-item">
-                                    <input type="checkbox" id="wed-block" v-model="blockWeekDays.wDays.wedBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                                    <input type="checkbox" id="wed-block" v-model="blockWeekDays.wDays.wedBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry]!, blockWeekDays)"/>
                                     <label for="wed-block"> &nbsp; - Quarta-feira</label>
                                 </code>
                                 <code class="wkday-item">
-                                    <input type="checkbox" id="thu-block" v-model="blockWeekDays.wDays.thuBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                                    <input type="checkbox" id="thu-block" v-model="blockWeekDays.wDays.thuBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry]!, blockWeekDays)"/>
                                     <label for="thu-block"> &nbsp; - Quinta-feira</label>
                                 </code>
                                 <code class="wkday-item">
-                                    <input type="checkbox" id="fri-block" v-model="blockWeekDays.wDays.friBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                                    <input type="checkbox" id="fri-block" v-model="blockWeekDays.wDays.friBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry]!, blockWeekDays)"/>
                                     <label for="fri-block"> &nbsp; - Sexta-feira</label>
                                 </code>
                                 <code class="wkday-item">
-                                    <input type="checkbox" id="sat-block" v-model="blockWeekDays.wDays.satBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry], blockWeekDays)"/>
+                                    <input type="checkbox" id="sat-block" v-model="blockWeekDays.wDays.satBlock" v-on:click="updateWeekDays(blockEntryList[selectedBlockentry]!, blockWeekDays)"/>
                                     <label for="sat-block"> &nbsp; - Sábado</label>
                                 </code>
                             </div>
 
-                            <button class="settings-options-button" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked" v-on:click="addBlockHoursInterval(
-                            blockEntryList[selectedBlockentry],
-                            blockIntervalHours1,
-                            blockIntervalMinutes1,
-                            blockIntervalHours2,
-                            blockIntervalMinutes2
+                            <button class="settings-options-button" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked" v-on:click="addBlockHoursInterval(
+                                blockEntryList[selectedBlockentry]!,
+                                blockIntervalHours1,
+                                blockIntervalMinutes1,
+                                blockIntervalHours2,
+                                blockIntervalMinutes2
                             )">
                             Adicionar Intervalo
                         </button>
@@ -332,23 +337,23 @@ const forceUpdate = async(ind:number) => {
 
                 <div class="settings-option-box">
                     <p class="option-title">Limite de uso diário</p>
-                    <code class="wkday-item" v-if="blockEntryList[selectedBlockentry].getDailyLimit()">
-                        {{formatHoursMinutes(blockEntryList[selectedBlockentry].getAccessTime().today)}}/{{formatHoursMinutes(blockEntryList[selectedBlockentry].getDailyLimitTime())}}
+                    <code class="wkday-item" v-if="blockEntryList[selectedBlockentry]?.getDailyLimit()">
+                        {{formatHoursMinutes(blockEntryList[selectedBlockentry]?.getAccessTime().today ?? 0)}}/{{formatHoursMinutes(blockEntryList[selectedBlockentry]?.getDailyLimitTime() ?? 0)}}
                     </code>
                     <div>
                         <input type="checkbox" v-model="openDailyLimit" name="limite-diario">
                         <label for="limite-diario">Configurar limite diário</label>
                         <div v-if="openDailyLimit">
                             <!--Adicionar Leading Zeros-->
-                            <input type="number" class="option-numberinput" v-model="dailyLimitHours" name="" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <input type="number" class="option-numberinput" v-model="dailyLimitHours" name="" max="23" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked">
                             <span>:</span>
-                            <input type="number" class="option-numberinput" v-model="dailyLimitMinutes" id="" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked">
+                            <input type="number" class="option-numberinput" v-model="dailyLimitMinutes" id="" max="59" min="0" placeholder="00" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked">
                             
-                            <button class="settings-options-button" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked" v-on:click="clearDailyLimit(blockEntryList[selectedBlockentry])">
+                            <button class="settings-options-button" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked" v-on:click="clearDailyLimit(blockEntryList[selectedBlockentry]!)">
                                 Limpar limite
                             </button>
 
-                            <button class="settings-options-button" v-bind:disabled="blockEntryList[selectedBlockentry].isBlocked().isBlocked" v-on:click="setDailyLimit(blockEntryList[selectedBlockentry], dailyLimitHours, dailyLimitMinutes)">
+                            <button class="settings-options-button" v-bind:disabled="blockEntryList[selectedBlockentry]?.isBlocked().isBlocked" v-on:click="setDailyLimit(blockEntryList[selectedBlockentry]!, dailyLimitHours, dailyLimitMinutes)">
                                 Definir limite
                             </button>
                         </div>
@@ -359,41 +364,41 @@ const forceUpdate = async(ind:number) => {
                     <p class="option-title">Bloqueio Breve</p>
                     
                     <div>
-                        <input type="checkbox" name="short-block-enabled" id="short-block-enabled" v-model="openShortBlock" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <input type="checkbox" name="short-block-enabled" id="short-block-enabled" v-model="openShortBlock" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry]!)">
                         <label for="short-block-enabled">Habilitar funcionalidade de Bloqueio Breve?</label>
                     </div>
                     <div v-if="openShortBlock">
                         <p>Bloquear após</p>
-                        <input type="radio" name="short-block-when" id="short-hour-half" v-bind:value="30*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <input type="radio" name="short-block-when" id="short-hour-half" v-bind:value="30*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry]!)">
                         <label for="short-hour-half">30 minutos</label>
-                        <input type="radio" name="short-block-when" id="short-hour-full" v-bind:value="60*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <input type="radio" name="short-block-when" id="short-hour-full" v-bind:value="60*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry]!)">
                         <label for="short-hour-full">1 hora</label>
-                        <input type="radio" name="short-block-when" id="short-hour-double" v-bind:value="120*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <input type="radio" name="short-block-when" id="short-hour-double" v-bind:value="120*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry]!)">
                         <label for="short-hour-double">2 horas</label>
-                        <input type="radio" name="short-block-when" id="short-hour-fourx" v-bind:value="240*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <input type="radio" name="short-block-when" id="short-hour-fourx" v-bind:value="240*1000*60" v-model="shortBlockLimit" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry]!)">
                         <label for="short-hour-fourx">4 horas</label>
 
                         <p>Duração de bloqueio</p>
-                        <input type="radio" name="short-block-dur" id="short-two-min" v-bind:value="2*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <input type="radio" name="short-block-dur" id="short-two-min" v-bind:value="2*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry]!)">
                         <label for="short-two-min">2 minutos</label>
-                        <input type="radio" name="short-block-dur" id="short-five-min" v-bind:value="5*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <input type="radio" name="short-block-dur" id="short-five-min" v-bind:value="5*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry]!)">
                         <label for="short-five-min">5 minutos</label>
-                        <input type="radio" name="short-block-dur" id="short-ten-min" v-bind:value="10*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <input type="radio" name="short-block-dur" id="short-ten-min" v-bind:value="10*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry]!)">
                         <label for="short-ten-min">10 minutos</label>
-                        <input type="radio" name="short-block-dur" id="short-thirty-min" v-bind:value="30*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry])">
+                        <input type="radio" name="short-block-dur" id="short-thirty-min" v-bind:value="30*1000*60" v-model="shortBlockDuration" v-on:change="updateShortBlock(blockEntryList[selectedBlockentry]!)">
                         <label for="short-thirty-min">30 minutos</label>
 
 
                         <p>Bloqueios Breves Opcionais</p>
                         <div>
                             <div>
-                                <input type="checkbox" name="autoplay-block" id="autoplay-block" v-model="autoplayBlockEnabled" v-on:change="updateAutoplay(blockEntryList[selectedBlockentry])">
+                                <input type="checkbox" name="autoplay-block" id="autoplay-block" v-model="autoplayBlockEnabled" v-on:change="updateAutoplay(blockEntryList[selectedBlockentry]!)">
                                 <label for="autoplay-block">Habilitar Bloqueio de Autoplay/Redirecionamento?</label>
                             </div>
                             <div>
-                                <input type="checkbox" name="doomscrolling-block" id="doomscrolling-block" v-model="doomscrollingBlockEnabled" v-on:change="updateDoomscrolling(blockEntryList[selectedBlockentry])">
+                                <input type="checkbox" name="doomscrolling-block" id="doomscrolling-block" v-model="doomscrollingBlockEnabled" v-on:change="updateDoomscrolling(blockEntryList[selectedBlockentry]!)">
                                 <label for="doomscrolling-block">Habilitar Bloqueio de "Doomscrolling"(Páginas sem fim)?</label>
-                                <input type="number" v-model.number="doomscrollingBlockRate" max="20000.0" min="500.0" step="100.0" placeholder="4000.0" v-on:change="updateDoomscrolling(blockEntryList[selectedBlockentry])" v-bind:disabled="!doomscrollingBlockEnabled">
+                                <input type="number" v-model.number="doomscrollingBlockRate" max="20000.0" min="500.0" step="100.0" placeholder="4000.0" v-on:change="updateDoomscrolling(blockEntryList[selectedBlockentry]!)" v-bind:disabled="!doomscrollingBlockEnabled">
                             </div>
 
                         </div>

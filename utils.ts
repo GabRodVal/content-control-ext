@@ -1,5 +1,5 @@
 import { BlockEntry } from "@/classes/BlockEntry";
-import { BlockEntryImp } from "@/interfaces/BlockEntryImp";
+import type { BlockEntryImp } from "@/interfaces/BlockEntryImp";
 
 /*async function getCurrentDomain(): Promise<string> {
     try {
@@ -27,7 +27,7 @@ import { BlockEntryImp } from "@/interfaces/BlockEntryImp";
 
 export function cleanDomainName(dName: string){
 
-    const validationReg = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/m;
+    const validationReg = /^[a-zA-Z0-9]{1,61}[a-zA-Z0-9-]{0,61}[a-zA-Z0-9]*(?:\.[a-zA-Z]{2,})+$/m;
     //const validationReg = /^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)/igm
 
 
@@ -55,9 +55,28 @@ export function parseResultsBlockEntry(res:BlockEntryImp[]): Array<BlockEntry>{
         return [];
     }
 
-    for (var f = 0; f < res.length; f++){
+    for (const f of res){
+        blockEntryArray.push(new BlockEntry(
+            f.domainName,
+            f.blockedUntil,
+            f.blockHours,
+            f.blockWeekDays,
+            f.dailyLimit,
+            f.dailyLimitTime,
+            f.lastAccess,
+            f.accessTime,
+            f.shortBlock,
+            f.shortBlockAccessTime,
+            f.shortBlockLimit,
+            f.shortBlockDuration,
+            f.shortBlockedUntil,
+            f.doomScrollingProtection,
+            f.doomScrollingRate,
+            f.autoPlayBlocker
+        ))
+    }
 
-
+    /*for (var f = 0; f < res.length; f++){
         blockEntryArray.push(new BlockEntry(
             res[f].domainName,
             res[f].blockedUntil,
@@ -76,7 +95,7 @@ export function parseResultsBlockEntry(res:BlockEntryImp[]): Array<BlockEntry>{
             res[f].doomScrollingRate,
             res[f].autoPlayBlocker
         ))
-    }
+    }*/
 
     return blockEntryArray;
 }

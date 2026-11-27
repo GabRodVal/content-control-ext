@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { nextTick, ref, onBeforeMount, h } from 'vue';
 import { BlockEntry } from '@/classes/BlockEntry';
+
 import { formatHoursMinutes, parseResultsBlockEntry } from '@/utils';
 import { setBlockEntryList,  getBlockEntryList } from '@/storage_utils';
+import type { BlockEntryImp } from '@/interfaces/BlockEntryImp';
 
 //const checked = true
 //const isExtensionEnabled = ref(true)
@@ -43,9 +45,12 @@ const blockRecs: Array<string> = [
 
 function findRepetition(domName:string){
     for (var it in blockList.value){
-        if (blockList.value[it].getDomainName().includes(domName) ||
-        domName.includes(blockList.value[it].getDomainName())){
-            return true
+        let blLst = blockList.value[it]
+        if (blLst){
+            if (blLst.getDomainName().includes(domName) ||
+            domName.includes(blLst.getDomainName())){
+                return true
+            }
         }
     }
     return false
@@ -115,8 +120,8 @@ async function removeBlockEntry(index:number){
 onBeforeMount(async () => {
     console.log('1')
   await browser.storage.local.get(["blockList"]).then((result)=>{
-    blockList.value = parseResultsBlockEntry(result.blockList);
-  }).catch((err) => {
+    blockList.value = parseResultsBlockEntry(result.blockList as BlockEntryImp[]);
+}).catch((err) => {
     console.error(err)
   }).finally(() =>{
     console.log(mounted.value)

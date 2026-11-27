@@ -4,7 +4,7 @@ import { getBlockEntryList, setBlockEntryList } from "@/storage_utils";
 
 export default defineContentScript({
   matches: ["http://*/*", "https://*/*"],
-  async main(ctx) {
+  async main(ctx:any) {
 
     async function handleFilter(flt:string, url:URL){
       
@@ -14,7 +14,7 @@ export default defineContentScript({
         return
       }
 
-      if (fResponse.toBlock) {
+      if (fResponse.toBlock && fResponse.blockContent) {
         if (fResponse.blockType == 'elem-hide') {
 
           switch (fResponse.blockSubtype) {
@@ -27,6 +27,7 @@ export default defineContentScript({
                   console.log(`ID remove ${fResponse.blockContent}`)
                 }
               }
+              break
             case 'class':
               if (fResponse.blockContent !== null) {
                 let els = document.getElementsByClassName(fResponse.blockContent)
@@ -42,6 +43,7 @@ export default defineContentScript({
                   }
                 }
               }
+              break
             case 'element':
               if (fResponse.blockContent !== null) {
                 let els = document.getElementsByTagName(fResponse.blockContent)
@@ -74,10 +76,10 @@ export default defineContentScript({
     await browser.storage.local.get([
       "filterList",
       "filterEnabled"
-    ]).then((result) => {
+    ]).then((result:any) => {
       filterList = result.filterList
       filterEnabled= result.filterEnabled
-    }).catch((err) => {
+    }).catch((err:any) => {
       console.error(err)
     });
 
@@ -105,14 +107,19 @@ export default defineContentScript({
 
             if (blockedEntry.getDoomscrollingBlockEnabled()) {
               const pageResizeObs = new ResizeObserver(entries => {
+                if (entries[0]){
                 blockedEntry.checkDoomscrolling(window.innerHeight, entries[0].target.scrollHeight)
                 if(blockedEntry.isShortBlocked()){
                    setBlockEntryList(blockList)
                 }
                 }
+              }
               )
               setTimeout(() => { }, 550)
-              pageResizeObs.observe(document.getElementsByTagName('body')[0], { box: 'device-pixel-content-box' })
+              let docBody = document.getElementsByTagName('body')[0]
+              if (docBody !== undefined){
+                pageResizeObs.observe(docBody, { box: 'device-pixel-content-box' })
+              }
               //document.body.onchange(
             }
 

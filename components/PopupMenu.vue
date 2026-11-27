@@ -67,7 +67,7 @@ async function getCurrentDomain(): Promise<string> {
   try {
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
     if (tabs.length > 0) {
-      const tabUrl: string | undefined = tabs[0]?.url;
+      const tabUrl = tabs[0]?.url;
       if (tabUrl) {
         return cleanDomainName(tabUrl);
       } else {
@@ -91,7 +91,7 @@ const handleToggleShowDomain = async() =>{
 const isBlockedDomain = () =>{
 
   for (let it = 0; it < blockEntryList.value.length; it++){
-    if (Boolean(curDomain.value.indexOf(blockEntryList.value[it].getDomainName()) != -1)){
+    if (Boolean(curDomain.value.indexOf(blockEntryList.value[it]?.getDomainName()!) != -1)){
       blockId.value = it
       return true
 
@@ -143,36 +143,36 @@ const isBlockedDomain = () =>{
           <p class="domain-info">Domínio Registrado: {{blockId!=-1 ? 'Verdadeiro' : 'Falso'}}</p>
             <div v-if="isBlockedDomain()" class="domain-box">
             <p class="domain-info">Limite Diário:
-              <code v-if="blockEntryList[blockId].getDailyLimit()">{{formatHoursMinutes(blockEntryList[blockId].getAccessTime().today)}}/{{formatHoursMinutes(blockEntryList[blockId].getDailyLimitTime())}}</code>
+              <code v-if="blockEntryList[blockId]?.getDailyLimit()">{{formatHoursMinutes(blockEntryList[blockId]?.getAccessTime().today!)}}/{{formatHoursMinutes(blockEntryList[blockId]?.getDailyLimitTime()!)}}</code>
               <code v-else>N/A</code>
             </p>
 
             <p class="domain-info">Dias de Bloqueio:</p>
-            <code v-if="!blockEntryList[blockId].getBlockWeekDays().blockByWeekday">
+            <code v-if="!blockEntryList[blockId]?.getBlockWeekDays().blockByWeekday">
               N/A
             </code>
             <div v-else class="info-box">
-              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.sunBlock">Domingo</code>
-              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.monBlock">Segunda-feira</code>
-              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.tueBlock">
+              <code class="wk-code" v-if="blockEntryList[blockId]?.getBlockWeekDays().wDays.sunBlock">Domingo</code>
+              <code class="wk-code" v-if="blockEntryList[blockId]?.getBlockWeekDays().wDays.monBlock">Segunda-feira</code>
+              <code class="wk-code" v-if="blockEntryList[blockId]?.getBlockWeekDays().wDays.tueBlock">
                 Terça-feira</code>
-              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.wedBlock">
+              <code class="wk-code" v-if="blockEntryList[blockId]?.getBlockWeekDays().wDays.wedBlock">
                 Quarta-feira</code>
-              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.thuBlock">
+              <code class="wk-code" v-if="blockEntryList[blockId]?.getBlockWeekDays().wDays.thuBlock">
                 Quinta-feira</code>
-              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.friBlock">
+              <code class="wk-code" v-if="blockEntryList[blockId]?.getBlockWeekDays().wDays.friBlock">
                 Sexta-feira</code>
-              <code class="wk-code" v-if="blockEntryList[blockId].getBlockWeekDays().wDays.satBlock">
+              <code class="wk-code" v-if="blockEntryList[blockId]?.getBlockWeekDays().wDays.satBlock">
                 Sábado</code>
 
             </div>
 
             <p class="domain-info">Horários de Bloqueio:</p>
-            <code v-if="blockEntryList[blockId].getBlockHours().length<1">
+            <code v-if="(blockEntryList[blockId]?.getBlockHours().length??0)<1">
               N/A
             </code>
             <div v-else class="info-box">
-              <code class="wk-code" v-for="blHour in blockEntryList[blockId].getBlockHours()">
+              <code class="wk-code" v-for="blHour in blockEntryList[blockId]?.getBlockHours()">
                 {{blHour}}
               </code>
             </div>

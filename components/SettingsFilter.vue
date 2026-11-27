@@ -18,7 +18,10 @@ const mounted = ref<boolean>(false)
 onBeforeMount(async () => {
     console.log('1')
   await browser.storage.local.get(["filterList"]).then((result)=>{
-    filterList.value = result.filterList
+    let fLst = result.filterList
+    if (Array.isArray(fLst) && fLst.every((item): item is string => typeof item === 'string')){
+        filterList.value = fLst
+    }
   }).catch((err) => {
     console.error(err)
   }).finally(() =>{

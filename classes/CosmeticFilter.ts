@@ -47,18 +47,18 @@ export class CosmeticFilter {
             
             for (let i = 0; i < filterArray.length; i++){
                 if (
-                    !filterArray[i].startsWith('!') &&
-                    !filterArray[i].startsWith('@') &&
-                    !filterArray[i].includes('#?#') &&
-                    !filterArray[i].includes('#@#') &&
-                    !filterArray[i].includes('~') &&
-                    !filterArray[i].includes('$') &&
-                    !filterArray[i].includes('{') &&
-                    !filterArray[i].includes('[') &&
-                    filterArray[i].includes('##') &&
-                    !(filterArray[i].length < 5)    
+                    !filterArray[i]?.startsWith('!') &&
+                    !filterArray[i]?.startsWith('@') &&
+                    !filterArray[i]?.includes('#?#') &&
+                    !filterArray[i]?.includes('#@#') &&
+                    !filterArray[i]?.includes('~') &&
+                    !filterArray[i]?.includes('$') &&
+                    !filterArray[i]?.includes('{') &&
+                    !filterArray[i]?.includes('[') &&
+                    filterArray[i]?.includes('##') &&
+                    !((filterArray[i]?.length ?? 0) < 5)    
                 ){
-                    finalFilterArray.push(filterArray[i])
+                    finalFilterArray.push(filterArray[i]!)
                 }
             }
                 //console.log(`Itens separados ao filtro: ${filterArray.length}`)
@@ -92,18 +92,18 @@ export class CosmeticFilter {
 
         for (let i = 0; i < filterArray.length; i++) {
             if (
-                !filterArray[i].startsWith('!') &&
-                !filterArray[i].startsWith('@') &&
-                !filterArray[i].includes('#?#') &&
-                !filterArray[i].includes('#@#') &&
-                !filterArray[i].includes('~') &&
-                !filterArray[i].includes('$') &&
-                !filterArray[i].includes('{') &&
-                !filterArray[i].includes('[') &&
-                filterArray[i].includes('##') &&
-                !(filterArray[i].length < 5)
+                !filterArray[i]?.startsWith('!') &&
+                !filterArray[i]?.startsWith('@') &&
+                !filterArray[i]?.includes('#?#') &&
+                !filterArray[i]?.includes('#@#') &&
+                !filterArray[i]?.includes('~') &&
+                !filterArray[i]?.includes('$') &&
+                !filterArray[i]?.includes('{') &&
+                !filterArray[i]?.includes('[') &&
+                filterArray[i]?.includes('##') &&
+                !((filterArray[i]?.length ??0) < 5)
             ) {
-                finalFilterArray.push(filterArray[i])
+                finalFilterArray.push(filterArray[i]!)
             }
         }
 
@@ -154,7 +154,7 @@ export class CosmeticFilter {
                 }
             } else {
                 const filterParts = abpFilter.split('##.')
-                const filterHostnames = filterParts[0].split(',')
+                const filterHostnames = filterParts[0]?.split(',')
                 for (var it in filterHostnames){
                     if (it.startsWith('||')){
                         if (hostname.includes(it)){
@@ -186,7 +186,7 @@ export class CosmeticFilter {
                     }
                 } 
                 
-                if (filterHostnames.includes(hostname)) {
+                if (filterHostnames?.includes(hostname)) {
                     return {
                         toBlock: true,
                         blockType: 'elem-hide',
@@ -206,7 +206,7 @@ export class CosmeticFilter {
                 }
             } else {
                 const filterParts = abpFilter.split('###')
-                const filterHostnames = filterParts[0].split(',')
+                const filterHostnames = filterParts[0]?.split(',')
 
                 for (var it in filterHostnames) {
                     if (it.startsWith('||')) {
@@ -239,7 +239,7 @@ export class CosmeticFilter {
                     }
                 }
 
-                if (filterHostnames.includes(hostname)) {
+                if (filterHostnames?.includes(hostname)) {
                     return {
                         toBlock: true,
                         blockType: 'elem-hide',
@@ -259,7 +259,7 @@ export class CosmeticFilter {
                 }
             } else {
                 const filterParts = abpFilter.split('##')
-                const filterHostnames = filterParts[0].split(',')
+                const filterHostnames = filterParts[0]?.split(',')
 
                 for (var it in filterHostnames) {
                     if (it.startsWith('||')) {
@@ -292,7 +292,7 @@ export class CosmeticFilter {
                     }
                 }
 
-                if (filterHostnames.includes(hostname)) {
+                if (filterHostnames?.includes(hostname)) {
                     return {
                         toBlock: true,
                         blockType: 'elem-hide',

@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { nextTick, ref, onBeforeMount, shallowRef } from 'vue';
 import { BlockEntry } from '@/classes/BlockEntry';
-import { BlockEntryImp } from '@/interfaces/BlockEntryImp';
+//import { BlockEntryImp } from '@/interfaces/BlockEntryImp';
 import { parseResultsBlockEntry, formatHoursMinutes } from '@/utils';
 import { getBlockEntryList, setBlockEntryList } from '@/storage_utils';
-import { DomainUsageStats } from '@/interfaces/DomainUsageStats';
+import type { DomainUsageStats } from '@/interfaces/DomainUsageStats';
 
 
 const blockEntryList = shallowRef<BlockEntry[]>([]);
@@ -84,7 +84,10 @@ function rankUsage(){
     const topUsed = new Set<string>();
     for (var i = 0; i < Math.min(rankedUsageToday.length, 5); i++){
         rankedUsage.value.map((val, ind) =>{
-            topUsed.add(val[i].domainName)
+            var tUs = val[i]
+            if (tUs !== undefined){
+                topUsed.add(tUs.domainName)
+            }
         })
     }
 
@@ -115,10 +118,13 @@ function rankUsage(){
             'count': 0
         }
 
+        var dName = usageTitles[ind]
+        if (dName){
         var usageTotal: DomainUsageStats = {
-            'domainName': usageTitles[ind],
+            'domainName': dName,
             'count': 0
         }
+        
 
         val.map((it, index) => {
             usageTotal.count = usageTotal.count + it.count
@@ -133,6 +139,7 @@ function rankUsage(){
         })
 
         rankedTotal.push(usageTotal);
+        }
     })
 
     rankedUsageAux.value.push(rankedColoring);
@@ -150,11 +157,16 @@ const colorDict: Record<number, string> = {
 }
 
 function colorHandling(domUse:DomainUsageStats) {
-    let indRes = rankedUsageAux.value[0].findIndex(id => id.domainName === domUse.domainName)
-    if(indRes !== -1){
-        return indRes;
+    let rIdx = rankedUsageAux.value[0]
+        if (rIdx){
+        let indRes = rIdx.findIndex(id => id.domainName === domUse.domainName)
+        if(indRes !== -1){
+            return indRes;
+        } else {
+            return 5;
+        }
     } else {
-        return 5;
+        return 5
     }
 }
 
@@ -170,12 +182,12 @@ function getMouseCoords(e:MouseEvent) {
         <div class="settings-item">
             <div class="stats-board">
                 <div v-for="(fullBlock, idx) in rankedUsage" class="stats-board-section">
-                    <p>{{ formatHoursMinutes(rankedUsageAux[1][idx].count) }}</p>
+                    <p>{{ formatHoursMinutes(rankedUsageAux[1]?.[idx]?.count ?? 0) }}</p>
                     <div class="stats-board-day" 
                         :style="{minHeight:'11.2rem'
                         }">
                         <div v-for="(statBlock, index) in rankedUsage[idx]" class="stats-board-domains" 
-                            :style="{height: `${(Math.max(statBlock.count, tenMin)/(Math.max(rankedUsageAux[1][idx].count  * 1.2, minTotal[idx])))*92}%`,
+                            :style="{height: `${(Math.max(statBlock.count, tenMin)/(Math.max((rankedUsageAux[1]?.[idx]?.count?? 1)  * 1.2, (minTotal[idx]??1))))*92}%`,
                                 minHeight:'1.2rem',
                             }" 
                             :class="colorDict[colorHandling(statBlock)]"
@@ -199,13 +211,13 @@ function getMouseCoords(e:MouseEvent) {
                                 <p v-if="index!=5">
                                     {{ statBlock.domainName }} => {{ formatHoursMinutes(statBlock.count) }}
                                 </p>
-                                <p v-else v-for="vle in rankedUsage[idx].filter((vl)=>{return vl.count <= rankedUsage[idx][5].count})" :class="colorDict[colorHandling(statBlock)]">
+                                <p v-else v-for="vle in rankedUsage[idx]?.filter((vl)=>{return vl.count <= (rankedUsage[idx]?.[5]?.count ?? 5)})" :class="colorDict[colorHandling(statBlock)]">
                                     {{vle.domainName}} => {{ formatHoursMinutes(vle.count) }}
                                 </p>
                             </div>
                         </div>
                         <p class="stats-board-day-title">
-                            {{rankedUsageAux[1][idx].domainName}}
+                            {{rankedUsageAux[1]?.[idx]?.domainName}}
                         </p>
                     </div>
                 </div>

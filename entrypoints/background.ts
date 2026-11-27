@@ -1,4 +1,3 @@
-import { BlockList } from "@/classes/BlockList";
 import { BlockEntry } from "@/classes/BlockEntry";
 import { CosmeticFilter } from "@/classes/CosmeticFilter";
 import { clearAllIntervals, parseResultsBlockEntry} from "@/utils";
@@ -66,7 +65,7 @@ export default defineBackground(() => {
       //"blockLists",
       "blockList",
       "statsRegEnabled"
-    ], (result) => {
+    ], (result:any) => {
       currentlyBlocking = result.currentlyBlocking;
       //blockLists = result.blockLists;
       blockList = parseResultsBlockEntry(result.blockList);
@@ -82,9 +81,10 @@ export default defineBackground(() => {
       if (!statsRegEnabled) {
         break
       }
-      blockList[f].updateAccessTime();
+      if (blockList !== undefined){
+        blockList[f]?.updateAccessTime();
+      }
     }
-    console.log(blockList)
     setBlockConfig(blockList, blockType)
   },5 * 60 * 1000)
 
@@ -95,7 +95,7 @@ export default defineBackground(() => {
     console.log('Iniciando...')
 
     browser.storage.local.get(["blockList"],
-      (result) => {
+      (result:any) => {
         blockList = parseResultsBlockEntry(result.blockList);
         console.log('Get #1b: OK =>', blockList, typeof(blockList))
     });
@@ -105,7 +105,7 @@ export default defineBackground(() => {
   //Block logic
   //Currently blocks anything in the blocklist
   browser.webRequest.onBeforeRequest.addListener(
-    (details) => {
+    (details:any) => {
       if(!currentlyBlocking){
         return {cancel: false};
       }
@@ -149,7 +149,7 @@ export default defineBackground(() => {
   );
 
   browser.webNavigation.onCommitted.addListener(
-    async (details) => {
+    async (details:any) => {
       //console.log('Nav Committed')
       //console.log(details)
       let navUrl = new URL(details.url)
@@ -161,7 +161,7 @@ export default defineBackground(() => {
         details.transitionQualifiers.includes('client_redirect')
       ) {
 
-        browser.tabs.get(details.tabId, async (res) => {
+        browser.tabs.get(details.tabId, async (res:any) => {
           let tUrl = res.url
           if (tUrl != undefined) {
             oUrl = new URL(tUrl)
@@ -189,7 +189,7 @@ export default defineBackground(() => {
   
 
   //Mudar para storage.local
-  browser.storage.onChanged.addListener((changes, namespace) =>{
+  browser.storage.onChanged.addListener((changes:any, namespace:string) =>{
     if (namespace == 'local'){
       if(changes.currentlyBlocking) {
         currentlyBlocking = changes.currentlyBlocking.newValue;
@@ -200,7 +200,7 @@ export default defineBackground(() => {
       }
 
       //Debug
-      browser.storage.local.getBytesInUse(['currentlyBlocking', 'blockList'], (result) => {
+      browser.storage.local.getBytesInUse(['currentlyBlocking', 'blockList'], (result:any) => {
         console.log(`Cur Storage Use: ${result} bytes`)
       })
       browser.storage.local.get(null).then((result: object) =>{
@@ -232,7 +232,7 @@ export default defineBackground(() => {
 
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
 
-    if (tabs.length > 0) {
+    if (tabs.length > 0 && tabs[0]) {
 
       if (tabs[0].url !== undefined){
         const tabUrl: string = tabs[0].url;
@@ -262,10 +262,10 @@ export default defineBackground(() => {
                   usageBeholders.push(setInterval(() => {
                     var newInterval = new Date();
                     var timeAdded = newInterval.getTime() - lastInterval.getTime();
-                    blockList[index].addAccessTime(timeAdded);
+                    blockList[index]?.addAccessTime(timeAdded);
 
                     accumulatedTime += timeAdded;
-                    console.log(`${bDomainName}: +2.5s! (${timeAdded})| ${blockList[index].getAccessTime().today} | sB ${blockList[index].getShortBlock().shortBlock}`)
+                    console.log(`${bDomainName}: +2.5s! (${timeAdded})| ${blockList[index]?.getAccessTime().today} | sB ${blockList[index]?.getShortBlock().shortBlock}`)
 
                     if (accumulatedTime > 1000 * 60 * 1) {
                       setBlockEntryList(blockList);

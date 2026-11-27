@@ -51,7 +51,11 @@ function specBlockType(blType: string|null): string{
     return ''
   }
   let blKey:string = verifyBlockType(blockPurpose.value)
-  return blockPurpDict[blKey]
+  if (blockPurpDict[blKey] !== undefined){
+    return blockPurpDict[blKey]
+  } else {
+    return ''
+  }
 }
 
 </script>

@@ -1,7 +1,7 @@
 import { BlockEntry } from "@/classes/BlockEntry";
-import { BlockEntryImp } from "@/interfaces/BlockEntryImp";
+import type { BlockEntryImp } from "@/interfaces/BlockEntryImp";
 import { parseResultsBlockEntry } from "@/utils";
-import { BlockObject } from "./interfaces/BlockObject";
+//import { BlockObject } from "./interfaces/BlockObject";
 
 export async function getBlockEntryList(): Promise<BlockEntry[]>{
     const result = await new Promise<{ blockList?: BlockEntryImp[] }>((resolve, reject) => {

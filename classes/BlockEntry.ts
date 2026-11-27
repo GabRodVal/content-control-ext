@@ -1,6 +1,6 @@
-import { BlockEntryAccessTime } from "@/interfaces/BlockEntryAccessTime";
-import { BlockObject } from "@/interfaces/BlockObject";
-import { BlockWeekDays } from "@/interfaces/BlockWeekDays";
+import type { BlockEntryAccessTime } from "@/interfaces/BlockEntryAccessTime";
+import type { BlockObject } from "@/interfaces/BlockObject";
+import type { BlockWeekDays } from "@/interfaces/BlockWeekDays";
 import { setBlockEntryList } from "@/storage_utils";
 
 export class BlockEntry {
@@ -158,11 +158,11 @@ export class BlockEntry {
         hourA = new Date();
         hourB = new Date();
         for (let f = 0; f<intervals.length; f++){
-            intA = intervals[f][0].split(`:`)
-            intB = intervals[f][1].split(`:`)
+            intA = intervals[f]?.[0].split(`:`)!
+            intB = intervals[f]?.[1].split(`:`)!
 
-            hourA.setHours(parseInt(intA[0]), parseInt(intA[1])); 
-            hourB.setHours(parseInt(intB[0]), parseInt(intB[1])); 
+            hourA.setHours(parseInt(intA[0]!), parseInt(intA[1]!)); 
+            hourB.setHours(parseInt(intB[0]!), parseInt(intB[1]!)); 
 
             if (curDate > hourA && curDate < hourB){
                 return true;

@@ -1,5 +1,5 @@
-import { BlockEntryAccessTime } from "./BlockEntryAccessTime";
-import { BlockWeekDays } from "./BlockWeekDays";
+import type { BlockEntryAccessTime } from "./BlockEntryAccessTime";
+import type { BlockWeekDays } from "./BlockWeekDays";
 
 export interface BlockEntryImp {
     domainName: string,
