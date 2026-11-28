@@ -32,9 +32,10 @@ npm run zip
 
 ### Veja também
 
+
 #### Guia de uso
 
-Acesso o manual de uso da extensão [aqui](.)!
+Acesso o manual de uso da extensão [aqui](https://github.com/user-attachments/files/35549314/Manual.OzoneBlock.pdf)!
 
 #### Feedback
 
