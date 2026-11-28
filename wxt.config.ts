@@ -5,7 +5,7 @@ export default defineConfig({
   manifest: {
     "name": "OzoneBlock",
     "description": "Extensão para controle de tempo de uso e navegação.",
-    "version":"1.0.0",
+    "version":"1.0.1",
     "version_name": "1.0",
     "permissions": [
       "storage",

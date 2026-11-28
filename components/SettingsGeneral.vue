@@ -117,7 +117,7 @@ return all false
         <div class="settings-item">
             <p> Feedback</p>
             <p>Se possível, responda um rápido formulário sobre sua experiência com a extensão</p>
-            <code>formulario.aqui/feedback</code>
+            <code> https://forms.gle/LHsc2s2KGAiri2Ah6 </code>
         </div>
     </div>
 </template>
