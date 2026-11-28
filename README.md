@@ -4,22 +4,27 @@
 
 Extensão desenvolvida como parte do TCC *Extensão de controle de conteúdo para o combate a dependência em mídias digitais*
 
-### Instalação
+### Download
 
 É possível baixar o .zip com a versão de desenvolvimento [aqui](https://github.com/GabRodVal/content-control-ext/releases).
 
 ---
 
-Execute no diretório da extensão:
+Para conseguir o .zip através do código base, execute no diretório da extensão:
 
-#### Instalação - Firefox
+#### Build da versão de Desenvolvimento - Firefox
 
-> npm i
->
-> npm run dev:firefox
+```
+npm i
 
-#### Instalação - Chrome
+npm run zip:firefox
+```
 
-> npm i
->
-> npm run dev:chrome
+
+#### Build da versão de Desenvolvimento - Chrome
+
+```
+npm i
+
+npm run zip
+```
