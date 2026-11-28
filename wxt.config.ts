@@ -13,10 +13,17 @@ export default defineConfig({
       "webRequest",
       "webRequestBlocking",
       "webNavigation",
-      "data_collection_permissions",
       "<all_urls>",
       "http://*/",
       "https://*/"
-    ]
+    ],
+    "browser_specific_settings":{
+      "gecko":{
+        "data_collection_permissions": {
+          "required":['none'],
+          
+        }
+      }
+    }
   },
 });
